@@ -1,0 +1,70 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <SupportedOSPlatformVersion>10.0.26100.0</SupportedOSPlatformVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <VersionPrefix>2.0.0</VersionPrefix>
+    <ApplicationIcon>Images\ring-of-kinship.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="Images\winterface_ready.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Images\ring-of-kinship.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Fonts\Base\0.png" />
+    <EmbeddedResource Include="Fonts\Base\1.png" />
+    <EmbeddedResource Include="Fonts\Base\2.png" />
+    <EmbeddedResource Include="Fonts\Base\3.png" />
+    <EmbeddedResource Include="Fonts\Base\4.png" />
+    <EmbeddedResource Include="Fonts\Base\5.png" />
+    <EmbeddedResource Include="Fonts\Base\6.png" />
+    <EmbeddedResource Include="Fonts\Base\7.png" />
+    <EmbeddedResource Include="Fonts\Base\8.png" />
+    <EmbeddedResource Include="Fonts\Base\9.png" />
+    <EmbeddedResource Include="Fonts\Large\0.png" />
+    <EmbeddedResource Include="Fonts\Large\1.png" />
+    <EmbeddedResource Include="Fonts\Large\2.png" />
+    <EmbeddedResource Include="Fonts\Large\3.png" />
+    <EmbeddedResource Include="Fonts\Large\4.png" />
+    <EmbeddedResource Include="Fonts\Large\5.png" />
+    <EmbeddedResource Include="Fonts\Large\6.png" />
+    <EmbeddedResource Include="Fonts\Large\7.png" />
+    <EmbeddedResource Include="Fonts\Large\8.png" />
+    <EmbeddedResource Include="Fonts\Large\9.png" />
+    <EmbeddedResource Include="Fonts\Large\comma.png" />
+    <EmbeddedResource Include="Fonts\Small\0.png" />
+    <EmbeddedResource Include="Fonts\Small\1.png" />
+    <EmbeddedResource Include="Fonts\Small\2.png" />
+    <EmbeddedResource Include="Fonts\Small\3.png" />
+    <EmbeddedResource Include="Fonts\Small\4.png" />
+    <EmbeddedResource Include="Fonts\Small\5.png" />
+    <EmbeddedResource Include="Fonts\Small\6.png" />
+    <EmbeddedResource Include="Fonts\Small\7.png" />
+    <EmbeddedResource Include="Fonts\Small\8.png" />
+    <EmbeddedResource Include="Fonts\Small\9.png" />
+    <EmbeddedResource Include="Fonts\Small\colon.png" />
+    <EmbeddedResource Include="Fonts\Small\minus.png" />
+    <EmbeddedResource Include="Fonts\Small\plus.png" />
+    <EmbeddedResource Include="Images\keys.png" />
+    <EmbeddedResource Include="Images\rooms.png" />
+    <EmbeddedResource Include="Images\map_marker.png" />
+    <EmbeddedResource Include="Images\winterface_marker.png" />
+    <EmbeddedResource Include="Images\winterface_ready.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.3" />
+    <PackageReference Include="Vortice.WinUI" Version="3.8.3" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,72 @@
+﻿<Window x:Class="Dungeons2.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Dungeons2"
+        mc:Ignorable="d"
+        Title="Dungeons" Height="600" Width="800">
+    <Grid>
+        <DataGrid x:Name="HistoryGrid" ItemsSource="{Binding FloorHistory}"
+                  AutoGenerateColumns="False" Margin="10,41,10,245" CanUserSortColumns="False" CopyingRowClipboardContent="HistoryGrid_CopyingRowClipboardContent">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" 
+                        Binding="{Binding Id}" 
+                        Width="SizeToHeader" />
+
+                <DataGridTextColumn Header="Timestamp" 
+                        Binding="{Binding Timestamp, StringFormat=\{0:g\}}" 
+                        Width="120" />
+
+                <DataGridTextColumn Header="Teammates" 
+                        Binding="{Binding Teammates}" 
+                        Width="60" />
+
+                <DataGridTextColumn Header="Floor" 
+                        Binding="{Binding FloorNumber}" 
+                        Width="30" />
+
+                <DataGridTextColumn Header="Size" 
+                        Binding="{Binding Size}" 
+                        Width="40" />
+
+                <DataGridTextColumn Header="Time" 
+                        Binding="{Binding Time}" 
+                        Width="60" />
+
+                <DataGridTextColumn Header="Bonus" 
+                        Binding="{Binding Bonus, StringFormat=\{0:P1\}}" 
+                        Width="50" />
+
+                <DataGridTextColumn Header="Mobs Mod" 
+                        Binding="{Binding MobsKilledMod}" 
+                        Width="40" />
+
+                <DataGridTextColumn Header="Boost" 
+                        Binding="{Binding Boost}" 
+                        Width="30" />
+
+                <DataGridTextColumn Header="Total Mod" 
+                        Binding="{Binding TotalMod}" 
+                        Width="40" />
+
+                <DataGridTextColumn Header="Total XP" 
+                        Binding="{Binding TotalXP, StringFormat=\{0:N0\}}" 
+                        Width="60" />
+
+                <DataGridTextColumn Header="RC" 
+                        Binding="{Binding RoomCount}" 
+                        Width="40" />
+
+                <DataGridTextColumn Header="DE" 
+                        Binding="{Binding DeadEnds}" 
+                        Width="40" />
+                <DataGridTextColumn Header="Notes" 
+                        Binding="{Binding Notes}" 
+                        Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <ComboBox x:Name="RSWindowComboBox" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="255" ItemsSource="{Binding RSWindows}" SelectedItem="{Binding SelectedWindow}"/>
+        <TextBox x:Name="LogTextBox" Margin="10,0,10,10" TextWrapping="Wrap" IsReadOnly="True" FontFamily="Cascadia Code" Height="230" VerticalAlignment="Bottom"/>
+    </Grid>
+</Window>
