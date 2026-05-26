@@ -67,6 +67,6 @@
             </DataGrid.Columns>
         </DataGrid>
         <ComboBox x:Name="RSWindowComboBox" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="255" ItemsSource="{Binding RSWindows}" SelectedItem="{Binding SelectedWindow}"/>
-        <TextBox x:Name="LogTextBox" Margin="10,0,10,10" TextWrapping="Wrap" IsReadOnly="True" FontFamily="Cascadia Code" Height="230" VerticalAlignment="Bottom"/>
+        <TextBox x:Name="LogTextBox" Margin="10,0,10,10" TextWrapping="Wrap" IsReadOnly="True" FontFamily="Cascadia Code" Height="230" VerticalAlignment="Bottom" VerticalScrollBarVisibility="Auto"/>
     </Grid>
 </Window>

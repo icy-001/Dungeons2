@@ -11,8 +11,8 @@
                 HorizontalAlignment="Stretch" 
                 VerticalAlignment="Stretch" 
                 IsHitTestVisible="False" />
-        <Border x:Name="StatusBorder" Padding="10,2" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="#7F000000" Height="19">
-            <TextBlock x:Name="StatusText" Foreground="#FFEADFDF">Hello world</TextBlock>
+        <Border x:Name="StatusBorder" Padding="10,2" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="#C0000000" Height="19">
+            <TextBlock x:Name="StatusText" Foreground="White">Rooms: 0</TextBlock>
         </Border>
     </Grid>
 </Window>

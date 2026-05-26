@@ -32,7 +32,7 @@ namespace Dungeons2
             return count;
         }
 
-        public int DeadEnds()
+        public int DeadEndCount()
         {
             int count = 0;
             for (int r = 0; r < 8; r++)

@@ -25,7 +25,7 @@ namespace Dungeons2
             InitializeComponent();
             dungeonStore = store;
 
-            trackerTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+            trackerTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
             trackerTimer.Tick += (sender, args) =>
             {
                 TrackingLoop();
@@ -65,7 +65,7 @@ namespace Dungeons2
         {
             _ = Dispatcher.InvokeAsync(() =>
             {
-                var requiredKeys = new HashSet<int>();
+                ulong requiredKeys = 0;
 
                 for (int i = 0; i < 8; ++i)
                 {
@@ -74,7 +74,7 @@ namespace Dungeons2
                         int key = dungeonStore.Rooms[i, j].Key;
                         if (key != -1 && (dungeonStore.KeyMask & (1UL << key)) != 0)
                         {
-                            _ = requiredKeys.Add(key);
+                            requiredKeys |= 1UL << key;
 
                             if (!activeRects.TryGetValue(key, out var rect))
                             {
@@ -113,7 +113,7 @@ namespace Dungeons2
 
                 var keysToRemove = new List<int>();
                 foreach (int k in activeRects.Keys)
-                    if (!requiredKeys.Contains(k))
+                    if ((requiredKeys & (1UL << k)) == 0)
                         keysToRemove.Add(k);
 
                 foreach (int k in keysToRemove)
@@ -172,10 +172,11 @@ namespace Dungeons2
             }
             StatusBorder.Visibility = Visibility.Visible;
             int c = dungeonStore.RoomCount();
+            int d = dungeonStore.DeadEndCount();
             var elapsed = DateTimeOffset.Now - dungeonStore.FloorStartTime;
             if (elapsed.TotalMilliseconds < 0)
                 return;
-            StatusText.Text = $"RC: {c} | RPM: {c / elapsed.TotalMinutes:F1}";
+            StatusText.Text = $"Rooms: {c,-2}  •  Dead ends: {d,-2}  •  RPM: {c / elapsed.TotalMinutes:F1}";
         }
 
         protected override void OnClosed(EventArgs e)

@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
@@ -88,12 +89,14 @@ namespace Dungeons2
 
                 session = framePool.CreateCaptureSession(item);
                 session.IsCursorCaptureEnabled = false;
+                session.IncludeSecondaryWindows = false;
                 session.IsBorderRequired = false;
+                session.MinUpdateInterval = TimeSpan.Zero;
 
                 framePool.FrameArrived += (sender, args) =>
                 {
                     var frame = sender.TryGetNextFrame();
-                    if (frame == null) return;
+                    if (frame is null) return;
 
                     lock (frameLock)
                     {
@@ -106,6 +109,10 @@ namespace Dungeons2
             }
         }
 
+        /// <summary>
+        /// Used for calibration.
+        /// </summary>
+        /// <returns>Returns the full screen frame access.</returns>
         public FrameAccess CaptureFullScreen()
         {
             lock (frameLock)
@@ -138,7 +145,7 @@ namespace Dungeons2
         {
             lock (frameLock)
             {
-                if (currentFrame == null)
+                if (currentFrame is null || stagingTexture is null)
                     return new();
 
                 using ID3D11Texture2D1 frameTexture = new(currentFrame.Surface.As<IDirect3DDxgiInterfaceAccess>().GetInterface(typeof(ID3D11Texture2D1).GUID));

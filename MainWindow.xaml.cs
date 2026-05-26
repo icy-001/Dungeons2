@@ -65,21 +65,6 @@ namespace Dungeons2
             UpdateProcesses();
 
             _ = MainLoopAsync();
-
-            //var proc = Process.GetProcessesByName("rs2client").FirstOrDefault();
-            //if (proc != null)
-            //{
-            //    rsHwnd = proc.MainWindowHandle;
-            //    capture = new(new((ulong)rsHwnd));
-            //    var overlayWindow = new OverlayWindow(dungeonStore) { RsHwnd = rsHwnd };
-            //    overlayWindow.Show();
-            //    Log("RS window found");
-            //}
-            //else
-            //{
-            //    Log("No RS window found. Start RS then restart application.");
-            //}
-
         }
 
         private void UpdateProcesses()
@@ -182,7 +167,7 @@ namespace Dungeons2
                         Id = FloorHistory.Count + 1,
                         Timestamp = dungeonStore.LastActiveTime,
                         RoomCount = dungeonStore.RoomCount(),
-                        DeadEnds = dungeonStore.DeadEnds()
+                        DeadEnds = dungeonStore.DeadEndCount()
                     };
                     if (floorData.TotalXP == 0)
                     {
