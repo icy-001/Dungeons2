@@ -68,5 +68,7 @@
         </DataGrid>
         <ComboBox x:Name="RSWindowComboBox" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="255" ItemsSource="{Binding RSWindows}" SelectedItem="{Binding SelectedWindow}"/>
         <TextBox x:Name="LogTextBox" Margin="10,0,10,10" TextWrapping="Wrap" IsReadOnly="True" FontFamily="Cascadia Code" Height="230" VerticalAlignment="Bottom" VerticalScrollBarVisibility="Auto"/>
+        <TextBlock HorizontalAlignment="Left" Margin="277,13,0,0" TextWrapping="Wrap" Text="Target RPM:" VerticalAlignment="Top"/>
+        <TextBox Height="20" Margin="345,11,0,0" VerticalAlignment="Top" Text="{Binding TargetRpm, StringFormat={}{0:F1}}" PreviewTextInput="TextBox_PreviewTextInput" HorizontalAlignment="Left" Width="55"/>
     </Grid>
 </Window>

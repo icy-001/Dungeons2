@@ -93,17 +93,19 @@ namespace Dungeons2
                 else
                     high_x = mid;
             }
-            return ((double)low_x - begin + 1) / (end - begin);
+            return ((double)low_x - begin + 2) / (end - begin);
         }
 
         public FloorData Read()
         {
             string floorSizeMod = ReadField(Field.SizeMod);
+            string size = floorSizeMod == "+500" ? "Large" : floorSizeMod == "+250" ? "Medium" : "Small";
+            int bonusField = ParseOrDefault(ReadField(Field.BonusMod));
             return new FloorData(
                 FloorNumber: ParseOrDefault(ReadField(Field.Floor)),
-                Size: floorSizeMod == "+500" ? "Large" : floorSizeMod == "+250" ? "Medium" : "Small",
+                Size: size,
                 Time: ReadField(Field.Time),
-                Bonus: GetBonus(),
+                Bonus: size == "Large" ? (double)bonusField / 360 : GetBonus(),
                 MobsKilledMod: ParseOrDefault(ReadField(Field.LevelMod)),
                 Boost: ParseOrDefault(ReadField(Field.FloorXPBoost)),
                 TotalMod: ParseOrDefault(ReadField(Field.TotalMod)),

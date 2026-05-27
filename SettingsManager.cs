@@ -13,6 +13,7 @@ namespace Dungeons2
         public int WinterfaceY { get; set; } = 373;
         public string MapSaveLocation { get; set; } = "Maps";
         public string WinterfaceSaveLocation { get; set; } = "Winterfaces";
+        public double TargetRpm { get; set; } = 8.4;
 
         public static Settings Default { get; set; } = new();
 

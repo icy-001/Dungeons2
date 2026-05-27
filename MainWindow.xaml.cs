@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -17,24 +18,6 @@ namespace Dungeons2
         private readonly DungeonStore dungeonStore = new();
         private readonly GameCapture capture = new();
         private readonly OverlayWindow overlayWindow;
-
-        public ObservableCollection<FloorData> FloorHistory { get; } = [];
-        public ObservableCollection<ProcessWindow> RSWindows { get; } = [];
-        public ProcessWindow? SelectedWindow
-        {
-            get; set
-            {
-                if (field != value)
-                {
-                    field = value;
-                    Log($"Setting RS window to {value}");
-                    capture?.SetTarget(new((ulong)(value?.Handle ?? IntPtr.Zero)));
-                    overlayWindow.RsHwnd = value?.Handle ?? IntPtr.Zero;
-                    dungeonStore.KeyMask = 0;
-                    dungeonStore.InFloor = false;
-                }
-            }
-        }
 
         public MainWindow()
         {
@@ -54,6 +37,26 @@ namespace Dungeons2
             overlayWindow = new(dungeonStore);
             overlayWindow.Show();
         }
+
+        public ObservableCollection<FloorData> FloorHistory { get; } = [];
+        public ObservableCollection<ProcessWindow> RSWindows { get; } = [];
+        public ProcessWindow? SelectedWindow
+        {
+            get; set
+            {
+                if (field != value)
+                {
+                    field = value;
+                    Log($"Setting RS window to {value}");
+                    capture?.SetTarget(new((ulong)(value?.Handle ?? IntPtr.Zero)));
+                    overlayWindow.RsHwnd = value?.Handle ?? IntPtr.Zero;
+                    dungeonStore.KeyMask = 0;
+                    dungeonStore.InFloor = false;
+                }
+            }
+        }
+
+        public double TargetRpm { get => Settings.Default.TargetRpm; set { Settings.Default.TargetRpm = value; } }
 
         protected override void OnSourceInitialized(EventArgs e)
         {
@@ -241,5 +244,14 @@ namespace Dungeons2
                 }
             }
         }
+
+        private void TextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            Regex regex = NumericRegex();
+            e.Handled = regex.IsMatch(e.Text);
+        }
+
+        [GeneratedRegex("[^0-9.]+")]
+        private static partial Regex NumericRegex();
     }
 }

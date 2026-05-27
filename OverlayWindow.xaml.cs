@@ -18,7 +18,7 @@ namespace Dungeons2
         private readonly DispatcherTimer trackerTimer;
         private readonly DungeonStore dungeonStore;
         private ulong currentKeyMask;
-        private readonly Dictionary<int, Rectangle> activeRects = [];
+        private readonly Rectangle?[] activeRects = new Rectangle?[64];
 
         public OverlayWindow(DungeonStore store)
         {
@@ -61,6 +61,16 @@ namespace Dungeons2
             OnStateChanged(this, EventArgs.Empty);
         }
 
+        protected override void OnClosed(EventArgs e)
+        {
+            trackerTimer.Stop();
+
+            dungeonStore.KeyMaskChanged -= OnStateChanged;
+            dungeonStore.RoomsChanged -= OnStateChanged;
+
+            base.OnClosed(e);
+        }
+
         private void OnStateChanged(object? sender, EventArgs e)
         {
             _ = Dispatcher.InvokeAsync(() =>
@@ -76,9 +86,9 @@ namespace Dungeons2
                         {
                             requiredKeys |= 1UL << key;
 
-                            if (!activeRects.TryGetValue(key, out var rect))
+                            if (activeRects[key] is null)
                             {
-                                rect = new Rectangle
+                                var rect = new Rectangle
                                 {
                                     Width = 27,
                                     Height = 27,
@@ -96,11 +106,11 @@ namespace Dungeons2
                                 {
                                     var thicknessAnim = new DoubleAnimation
                                     {
-                                        From = 1.0,
-                                        To = 5.0,
-                                        Duration = TimeSpan.FromMilliseconds(400),
+                                        From = 1,
+                                        To = 4,
+                                        Duration = TimeSpan.FromMilliseconds(300),
                                         AutoReverse = true,
-                                        RepeatBehavior = new RepeatBehavior(3),
+                                        RepeatBehavior = new RepeatBehavior(6),
                                         EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
                                     };
 
@@ -112,14 +122,14 @@ namespace Dungeons2
                 }
 
                 var keysToRemove = new List<int>();
-                foreach (int k in activeRects.Keys)
-                    if ((requiredKeys & (1UL << k)) == 0)
+                for (int k = 0; k < 64; ++k)
+                    if (activeRects[k] is not null && (requiredKeys & (1UL << k)) == 0)
                         keysToRemove.Add(k);
 
                 foreach (int k in keysToRemove)
                 {
                     HighlightCanvas.Children.Remove(activeRects[k]);
-                    _ = activeRects.Remove(k);
+                    activeRects[k] = null;
                 }
 
                 currentKeyMask = dungeonStore.KeyMask;
@@ -151,7 +161,7 @@ namespace Dungeons2
             if (Visibility != Visibility.Visible)
                 Visibility = Visibility.Visible;
 
-            var topLeft = new POINT { X = 0, Y = 0 };
+            var topLeft = new POINT { X = Settings.Default.MapX, Y = Settings.Default.MapY };
             _ = User32.ClientToScreen(RsHwnd, ref topLeft);
             _ = User32.SetWindowPos(
                 hwnd,
@@ -176,17 +186,43 @@ namespace Dungeons2
             var elapsed = DateTimeOffset.Now - dungeonStore.FloorStartTime;
             if (elapsed.TotalMilliseconds < 0)
                 return;
-            StatusText.Text = $"Rooms: {c,-2}  •  Dead ends: {d,-2}  •  RPM: {c / elapsed.TotalMinutes:F1}";
+            double rpm = CalculateRpm(c, elapsed.TotalMinutes);
+            double ratio = rpm / Settings.Default.TargetRpm;
+            StatusText.Text = $"Rooms: {c,-2}  •  Dead ends: {d,-2}  •  RPM: {rpm:F1}";
+            StatusBorder.Background = RpmRatioToBrush(ratio);
         }
 
-        protected override void OnClosed(EventArgs e)
+        static SolidColorBrush RpmRatioToBrush(double ratio)
         {
-            trackerTimer.Stop();
+            if (ratio == 0)
+                return Brushes.Black;
+            if (ratio < 0.8)
+                return Brushes.Maroon;
+            if (ratio > 1.2)
+                return Brushes.DarkGreen;
+            double factor = (ratio - 0.8) / (1.2 - 0.8);
 
-            dungeonStore.KeyMaskChanged -= OnStateChanged;
-            dungeonStore.RoomsChanged -= OnStateChanged;
+            byte rStart = 135;
+            byte gStart = 0;
+            byte bStart = 0;
 
-            base.OnClosed(e);
+            byte rEnd = 0;
+            byte gEnd = 135;
+            byte bEnd = 0;
+
+            byte r = (byte)(rStart + (rEnd - rStart) * factor);
+            byte g = (byte)(gStart + (gEnd - gStart) * factor);
+            byte b = (byte)(bStart + (bEnd - bStart) * factor);
+
+            return new SolidColorBrush(Color.FromRgb(r, g, b));
+        }
+
+        static double CalculateRpm(int roomCount, double elapsedMinutes)
+        {
+            double baseMinutes = 2.0 / 60;
+            if (elapsedMinutes < baseMinutes)
+                return 0;
+            return (roomCount - 1) / (elapsedMinutes - baseMinutes);
         }
     }
 }

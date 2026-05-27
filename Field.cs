@@ -10,11 +10,11 @@ namespace Dungeons2
         public static readonly Field PrestigeXP = new() { Name = "PrestigeXP", FontType = FontType.BaseFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 70, StartX = 147 };
         public static readonly Field BaseXP = new() { Name = "BaseXP", FontType = FontType.BaseFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 70, StartX = 247 };
         public static readonly Field SizeMod = new() { Name = "SizeMod", FontType = FontType.SmallFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 120, StartX = 295 };
-        public static readonly Field BonusMod = new() { Name = "BonusMod", FontType = FontType.SmallFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 142, StartX = 298 };
+        public static readonly Field BonusMod = new() { Name = "BonusMod", FontType = FontType.SmallFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 142, StartX = 296 };
         public static readonly Field DifficultyMod = new() { Name = "DifficultyMod", FontType = FontType.SmallFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 162, StartX = 156 };
-        public static readonly Field LevelMod = new() { Name = "LevelMod", FontType = FontType.SmallFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 162, StartX = 298 };
-        public static readonly Field FloorXPBoost = new() { Name = "FloorXPBoost", FontType = FontType.SmallFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 184, StartX = 298 };
-        public static readonly Field DeathsMod = new() { Name = "DeathsMod", FontType = FontType.SmallFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 209, StartX = 298 };
+        public static readonly Field LevelMod = new() { Name = "LevelMod", FontType = FontType.SmallFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 162, StartX = 296 };
+        public static readonly Field FloorXPBoost = new() { Name = "FloorXPBoost", FontType = FontType.SmallFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 184, StartX = 296 };
+        public static readonly Field DeathsMod = new() { Name = "DeathsMod", FontType = FontType.SmallFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 209, StartX = 296 };
         public static readonly Field TotalMod = new() { Name = "TotalMod", FontType = FontType.BaseFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 236, StartX = 126 };
         public static readonly Field FinalXP = new() { Name = "FinalXP", FontType = FontType.LargeFont, ForeColor = Color.FromArgb(226, 226, 162), Y = 271, StartX = 116 };
 
