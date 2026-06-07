@@ -14,6 +14,8 @@ namespace Dungeons2
         public string MapSaveLocation { get; set; } = "Maps";
         public string WinterfaceSaveLocation { get; set; } = "Winterfaces";
         public double TargetRpm { get; set; } = 8.4;
+        public bool LogToSheet { get; set; } = false; 
+        public string SpreadsheetId { get; set; } = string.Empty;
 
         public static Settings Default { get; set; } = new();
 

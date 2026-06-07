@@ -17,7 +17,7 @@ namespace Dungeons2
             encoder.Save(stream);
         }
 
-        public static void SaveToPng(RawImageView image, string filePath)
+        public static void SaveToPng(RawImage image, string filePath)
         {
             // A uint is exactly 4 bytes. Stride is the width of a single row in bytes.
             int stride = image.Width * 4;
@@ -30,12 +30,12 @@ namespace Dungeons2
                 96,     // standard DPI Y
                 PixelFormats.Bgra32, // Maps exactly to standard 32-bit uint layout
                 null,
-                image.Pixels.ToArray(),
+                image.Pixels,
                 stride);
             SaveToPng(bitmap, filePath);
         }
 
-        public static void SaveCroppedToPng(RawImageView image, string filePath, int x, int y, int cropWidth, int cropHeight)
+        public static void SaveCroppedToPng(RawImage image, string filePath, int x, int y, int cropWidth, int cropHeight)
         {
             int stride = image.Width * 4;
 
@@ -46,7 +46,7 @@ namespace Dungeons2
                 96,
                 PixelFormats.Bgra32,
                 null,
-                image.Pixels.ToArray(),
+                image.Pixels,
                 stride);
 
             var cropRect = new Int32Rect(x, y, cropWidth, cropHeight);

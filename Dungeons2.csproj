@@ -10,6 +10,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <VersionPrefix>2.0.0</VersionPrefix>
     <ApplicationIcon>Images\ring-of-kinship.ico</ApplicationIcon>
+    <EnableMsixTooling>true</EnableMsixTooling>
   </PropertyGroup>
 
   <ItemGroup>
@@ -63,8 +64,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google.Apis.Auth" Version="1.74.0" />
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.74.0.4061" />
     <PackageReference Include="Vortice.Direct3D11" Version="3.8.3" />
     <PackageReference Include="Vortice.WinUI" Version="3.8.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="google-credentials.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

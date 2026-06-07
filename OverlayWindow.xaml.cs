@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -25,7 +26,7 @@ namespace Dungeons2
             InitializeComponent();
             dungeonStore = store;
 
-            trackerTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+            trackerTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
             trackerTimer.Tick += (sender, args) =>
             {
                 TrackingLoop();
@@ -45,33 +46,7 @@ namespace Dungeons2
             }
         }
 
-        protected override void OnSourceInitialized(EventArgs e)
-        {
-            base.OnSourceInitialized(e);
-            hwnd = new WindowInteropHelper(this).Handle;
-
-            nint exStyle = User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
-            _ = User32.SetWindowLongPtr(hwnd, User32.GWL_EXSTYLE, exStyle | User32.WS_EX_TRANSPARENT);
-
-            trackerTimer.Start();
-
-            dungeonStore.KeyMaskChanged += OnStateChanged;
-            dungeonStore.RoomsChanged += OnStateChanged;
-
-            OnStateChanged(this, EventArgs.Empty);
-        }
-
-        protected override void OnClosed(EventArgs e)
-        {
-            trackerTimer.Stop();
-
-            dungeonStore.KeyMaskChanged -= OnStateChanged;
-            dungeonStore.RoomsChanged -= OnStateChanged;
-
-            base.OnClosed(e);
-        }
-
-        private void OnStateChanged(object? sender, EventArgs e)
+        public void Update()
         {
             _ = Dispatcher.InvokeAsync(() =>
             {
@@ -92,8 +67,8 @@ namespace Dungeons2
                                 {
                                     Width = 27,
                                     Height = 27,
-                                    Stroke = Brushes.LightGreen,
-                                    StrokeThickness = 1,
+                                    Fill = Brushes.White,
+                                    Opacity = 0,
                                     Tag = key
                                 };
 
@@ -104,17 +79,17 @@ namespace Dungeons2
 
                                 if ((currentKeyMask & (1UL << key)) == 0)
                                 {
-                                    var thicknessAnim = new DoubleAnimation
+                                    var opacityAnim = new DoubleAnimation
                                     {
-                                        From = 1,
-                                        To = 4,
+                                        From = 0,
+                                        To = 0.8,
                                         Duration = TimeSpan.FromMilliseconds(300),
                                         AutoReverse = true,
                                         RepeatBehavior = new RepeatBehavior(6),
                                         EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
                                     };
 
-                                    rect.BeginAnimation(Shape.StrokeThicknessProperty, thicknessAnim);
+                                    rect.BeginAnimation(OpacityProperty, opacityAnim);
                                 }
                             }
                         }
@@ -136,12 +111,31 @@ namespace Dungeons2
             });
         }
 
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            hwnd = new WindowInteropHelper(this).Handle;
+
+            nint exStyle = User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
+            _ = User32.SetWindowLongPtr(hwnd, User32.GWL_EXSTYLE, exStyle | User32.WS_EX_TRANSPARENT);
+
+            trackerTimer.Start();
+            Update();
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            trackerTimer.Stop();
+
+            base.OnClosed(e);
+        }
+
         /// <summary>
         /// Moves the overlay window if the game window moves.
         /// </summary>
         private void TrackingLoop()
         {
-            if (RsHwnd == IntPtr.Zero)
+            if (RsHwnd == IntPtr.Zero || !dungeonStore.InFloor)
             {
                 if (Visibility != Visibility.Hidden)
                     Visibility = Visibility.Hidden;
@@ -181,14 +175,15 @@ namespace Dungeons2
                 return;
             }
             StatusBorder.Visibility = Visibility.Visible;
-            int c = dungeonStore.RoomCount();
+            int c = dungeonStore.RoomCount;
             int d = dungeonStore.DeadEndCount();
             var elapsed = DateTimeOffset.Now - dungeonStore.FloorStartTime;
             if (elapsed.TotalMilliseconds < 0)
                 return;
             double rpm = CalculateRpm(c, elapsed.TotalMinutes);
             double ratio = rpm / Settings.Default.TargetRpm;
-            StatusText.Text = $"Rooms: {c,-2}  •  Dead ends: {d,-2}  •  RPM: {rpm:F1}";
+            int ticks = (int)Math.Ceiling((double)dungeonStore.RoomTimer.ElapsedMilliseconds / 600);
+            StatusText.Text = $"Rooms: {c,-2}  •  Dead ends: {d,-2}  •  RPM: {rpm:F1}\nTicks since last room: {ticks}";
             StatusBorder.Background = RpmRatioToBrush(ratio);
         }
 
@@ -196,25 +191,37 @@ namespace Dungeons2
         {
             if (ratio == 0)
                 return Brushes.Black;
-            if (ratio < 0.8)
-                return Brushes.Maroon;
-            if (ratio > 1.2)
-                return Brushes.DarkGreen;
-            double factor = (ratio - 0.8) / (1.2 - 0.8);
+            double t = Math.Clamp((ratio - 0.8) / (1.2 - 0.8), 0, 1);
+            double hue = t * 120.0;
+            return new SolidColorBrush(HslToRgb(hue, 0.6, 0.25));
+        }
 
-            byte rStart = 135;
-            byte gStart = 0;
-            byte bStart = 0;
+        static Color HslToRgb(double h, double s, double l)
+        {
+            double c = (1.0 - Math.Abs(2.0 * l - 1.0)) * s;
+            double x = c * (1.0 - Math.Abs((h / 60.0) % 2.0 - 1.0));
+            double m = l - c / 2.0;
 
-            byte rEnd = 0;
-            byte gEnd = 135;
-            byte bEnd = 0;
+            double rPrime = 0;
+            double gPrime = 0;
+            double bPrime = 0;
 
-            byte r = (byte)(rStart + (rEnd - rStart) * factor);
-            byte g = (byte)(gStart + (gEnd - gStart) * factor);
-            byte b = (byte)(bStart + (bEnd - bStart) * factor);
+            if (h >= 0 && h < 60)
+            {
+                rPrime = c;
+                gPrime = x;
+            }
+            else if (h >= 60 && h <= 120)
+            {
+                rPrime = x;
+                gPrime = c;
+            }
 
-            return new SolidColorBrush(Color.FromRgb(r, g, b));
+            byte r = (byte)Math.Round((rPrime + m) * 255.0);
+            byte g = (byte)Math.Round((gPrime + m) * 255.0);
+            byte b = (byte)Math.Round((bPrime + m) * 255.0);
+
+            return Color.FromRgb(r, g, b);
         }
 
         static double CalculateRpm(int roomCount, double elapsedMinutes)

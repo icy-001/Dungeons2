@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Diagnostics;
+using System.Drawing;
 
 namespace Dungeons2
 {
@@ -11,7 +12,7 @@ namespace Dungeons2
         public const int MapWidth = 280, MapHeight = 280;
         public const int KeybagStartY = MapHeight;
         public const int KeybagPadding = 2;
-        public const double MatchThreshold = 100;
+        public const double MatchThreshold = 200;
         public static readonly Color MapCornerColorMin = Color.FromArgb(100, 87, 65);
         public static readonly Color MapCornerColorMax = Color.FromArgb(117, 104, 83);
         public static readonly Color MapTopRightCornerColor = Color.FromArgb(122, 52, 44);
@@ -47,6 +48,7 @@ namespace Dungeons2
             for (int i = 0; i < 4; ++i)
                 for (int j = 0; j < 5; ++j)
                 {
+                    bool found = false;
                     int x = 2 + 22 * j, y = KeybagStartY + 3 + 20 * i;
                     for (int k = 0; k < 64; ++k)
                     {
@@ -54,16 +56,20 @@ namespace Dungeons2
                         if (dist < MatchThreshold)
                         {
                             mask |= 1UL << k;
+                            found = true;
                             break;
                         }
                     }
+                    if (!found)
+                        return mask;
                 }
             return mask;
         }
 
-        public readonly Room[,] ReadMap()
+        public readonly (Room[,], int) ReadMap()
         {
             var res = new Room[8, 8];
+            int roomcount = 0;
             for (int x = 0; x < res.GetLength(0); x++)
                 for (int y = 0; y < res.GetLength(1); y++)
                     res[x, y] = new Room();
@@ -77,6 +83,7 @@ namespace Dungeons2
                         if (Enumerable.SequenceEqual(sig, Registry.RoomSignatures[k]))
                         {
                             res[i, j] = new Room { Direction = (Direction)k, Opened = true };
+                            roomcount++;
                             if (Image[x + 19, y + 18] == BaseColor)
                                 res[i, j].IsBase = true;
                             else if (Image[x + 8, y + 11] == BossColor)
@@ -89,7 +96,7 @@ namespace Dungeons2
                         // Check for keys
                         for (int k = 0; k < 64; ++k)
                         {
-                            double dist = Image.MatchDistance(Registry.GetMapKey(k), x, y + 6, MatchThreshold);
+                            double dist = Image.MatchDistance(Registry.GetMapKey(k), x + 3, y + 6, MatchThreshold);
                             if (dist < MatchThreshold)
                             {
                                 res[i, j].Key = k;
@@ -98,7 +105,7 @@ namespace Dungeons2
                         }
                     }
                 }
-            return res;
+            return (res, roomcount);
         }
     }
 }

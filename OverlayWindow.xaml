@@ -5,13 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Dungeons2"
         mc:Ignorable="d"
-        Title="Overlay" Height="300" Width="280" Topmost="True" WindowStyle="None" AllowsTransparency="True" BorderThickness="1" Background="Transparent"  ShowInTaskbar="False">
+        Title="Overlay" Height="322" Width="280" Topmost="True" WindowStyle="None" AllowsTransparency="True" BorderThickness="1" Background="Transparent"  ShowInTaskbar="False">
     <Grid>
         <Canvas x:Name="HighlightCanvas" 
                 HorizontalAlignment="Stretch" 
                 VerticalAlignment="Stretch" 
                 IsHitTestVisible="False" />
-        <Border x:Name="StatusBorder" Padding="10,2" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="#C0000000" Height="19">
+        <Border x:Name="StatusBorder" Padding="10,2" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="#C0000000" Height="39">
             <TextBlock x:Name="StatusText" Foreground="White">Rooms: 0</TextBlock>
         </Border>
     </Grid>
