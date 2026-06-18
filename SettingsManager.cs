@@ -13,7 +13,7 @@ namespace Dungeons2
         public int WinterfaceY { get; set; } = 373;
         public string MapSaveLocation { get; set; } = "Maps";
         public string WinterfaceSaveLocation { get; set; } = "Winterfaces";
-        public double TargetRpm { get; set; } = 8.4;
+        public double[] TargetRpms { get; set; } = [8.4, 13, 16, 18, 20];
         public bool LogToSheet { get; set; } = false; 
         public string SpreadsheetId { get; set; } = string.Empty;
 

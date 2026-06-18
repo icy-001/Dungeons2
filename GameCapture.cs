@@ -137,7 +137,7 @@ namespace Dungeons2
                 context.CopyResource(localStaging, frameTexture);
 
                 var map = context.Map(localStaging, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
-                return new(map, context, localStaging, true);
+                return new(map, context, localStaging, frameLock, true);
             }
         }
 
@@ -154,7 +154,7 @@ namespace Dungeons2
                 context.CopySubresourceRegion(stagingTexture, 0, 0, MapKeybagReader.MapHeight, 0, frameTexture, 0, new(Settings.Default.KeybagX, Settings.Default.KeybagY, 0, Settings.Default.KeybagX + 112, Settings.Default.KeybagY + 102, 1));
 
                 var map = context.Map(stagingTexture, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
-                return new(map, context, stagingTexture, false);
+                return new(map, context, stagingTexture, frameLock, false);
             }
         }
 
@@ -170,7 +170,7 @@ namespace Dungeons2
                 context.CopySubresourceRegion(winterfaceTexture, 0, 0, 0, 0, frameTexture, 0, new(Settings.Default.WinterfaceX, Settings.Default.WinterfaceY, 0, Settings.Default.WinterfaceX + WinterfaceReader.WinterfaceWidth, Settings.Default.WinterfaceY + WinterfaceReader.WinterfaceHeight, 1));
 
                 var map = context.Map(winterfaceTexture, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
-                return new(map, context, winterfaceTexture, false);
+                return new(map, context, winterfaceTexture, frameLock, false);
             }
         }
     }

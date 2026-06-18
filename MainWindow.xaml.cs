@@ -5,6 +5,7 @@ using Google.Apis.Sheets.v4.Data;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -37,13 +38,14 @@ namespace Dungeons2
             CommandManager.AddPreviewExecutedHandler(HistoryGrid, OnPreviewCopy);
 
             // Create maps and winterfaces directory
-            Directory.CreateDirectory(Settings.Default.MapSaveLocation);
-            Directory.CreateDirectory(Settings.Default.WinterfaceSaveLocation);
+            _ = Directory.CreateDirectory(Settings.Default.MapSaveLocation);
+            _ = Directory.CreateDirectory(Settings.Default.WinterfaceSaveLocation);
 
             overlayWindow = new(dungeonStore);
             overlayWindow.Show();
 
             InitializeGoogleSheets();
+            Log("Connected to Google Sheets");
         }
 
         public ObservableCollection<FloorData> FloorHistory { get; } = [];
@@ -63,8 +65,6 @@ namespace Dungeons2
                 }
             }
         }
-
-        public static double TargetRpm { get => Settings.Default.TargetRpm; set => Settings.Default.TargetRpm = value; }
         public static bool LogToSheet { get => Settings.Default.LogToSheet; set => Settings.Default.LogToSheet = value; }
         public static string SpreadsheetId { get => Settings.Default.SpreadsheetId; set => Settings.Default.SpreadsheetId = value; }
 
@@ -100,6 +100,19 @@ namespace Dungeons2
 
             if (SelectedWindow == null)
                 RSWindowComboBox.SelectedIndex = 0;
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if (e.Key == Key.D && (Keyboard.Modifiers & ModifierKeys.Shift) != 0)
+            {
+                StringBuilder sb = new();
+                for (int i = 0; i < 8; ++i)
+                    for (int j = 0; j < 8; ++j)
+                        if (dungeonStore.Map.Rooms[i, j].SkillDoor != -1)
+                            _ = sb.Append(Registry.SkillDoors[dungeonStore.Map.Rooms[i, j].SkillDoor].Name + " ");
+                Log(sb.ToString());
+            }
         }
 
         protected override void OnClosed(EventArgs e)
@@ -148,7 +161,7 @@ namespace Dungeons2
 
         private void Log(string message)
         {
-            Dispatcher.Invoke(() =>
+            _ = Dispatcher.InvokeAsync(() =>
             {
                 LogTextBox.AppendText($"[{DateTimeOffset.Now:G}] {message}\n");
                 LogTextBox.ScrollToEnd();
@@ -160,7 +173,8 @@ namespace Dungeons2
             if (!capture.IsActive)
                 return;
 
-            var mapKeybagImage = RawImageView.FromFrame(capture.CaptureMapKeybag());
+            using var keybagFrame = capture.CaptureMapKeybag();
+            var mapKeybagImage = RawImageView.FromFrame(keybagFrame);
             MapKeybagReader reader = new(mapKeybagImage);
 
             bool hasMap = reader.HasMap();
@@ -168,18 +182,32 @@ namespace Dungeons2
             {
                 bool reset = DateTimeOffset.Now - dungeonStore.LastActiveTime > TimeSpan.FromSeconds(6);
                 // Check winterface
-                var winterfaceImage = RawImageView.FromFrame(capture.CaptureWinterface());
+                using var winterfaceFrame = capture.CaptureWinterface();
+                var winterfaceImage = RawImageView.FromFrame(winterfaceFrame);
                 WinterfaceReader winterfaceReader = new(winterfaceImage);
 
                 bool winterfaceSuccess = false;
                 if (winterfaceReader.HasWinterface() && (FloorHistory.Count == 0 || FloorHistory[^1].Timestamp != dungeonStore.LastActiveTime))
                 {
+                    StringBuilder notesSB = new();
+                    for (int i = 0; i < dungeonStore.RoomTicks.Count; ++i)
+                    {
+                        var (r, ticks) = dungeonStore.RoomTicks[i];
+                        if (ticks >= 20)
+                        {
+                            if (notesSB.Length > 0)
+                                _ = notesSB.Append(", ");
+                            _ = notesSB.Append($"r{r}: {ticks}t");
+                        }
+                    }
+
                     var floorData = winterfaceReader.Read() with
                     {
                         Id = FloorHistory.Count + 1,
                         Timestamp = dungeonStore.LastActiveTime,
                         RoomCount = dungeonStore.RoomCount,
-                        DeadEnds = dungeonStore.DeadEndCount()
+                        DeadEnds = dungeonStore.DeadEndCount(),
+                        Notes = notesSB.ToString()
                     };
                     if (floorData.TotalXP == 0)
                     {
@@ -218,18 +246,21 @@ namespace Dungeons2
                 dungeonStore.KeyMask = 0;
                 dungeonStore.RoomCount = 0;
                 dungeonStore.FloorStartTime = DateTimeOffset.Now - TimeSpan.FromMilliseconds(1150); // Empirical
+                dungeonStore.Map.Clear();
+                dungeonStore.RoomTicks.Clear();
                 dungeonStore.RoomTimer.Restart();
                 Log($"Start of floor {++dungeonStore.FloorCounter}");
             }
             dungeonStore.LastActiveTime = DateTimeOffset.Now;
-            var (rooms, roomCount) = reader.ReadMap();
+            var (map, roomCount) = reader.ReadMap();
             bool changed = false;
             if (roomCount > dungeonStore.RoomCount)
             {
                 changed = true;
-                dungeonStore.Rooms = rooms;
+                dungeonStore.Map.Merge(map);
                 dungeonStore.RoomCount = roomCount;
-                var ticks = Math.Round(dungeonStore.RoomTimer.Elapsed.TotalMilliseconds / 600);
+                int ticks = (int)Math.Round(dungeonStore.RoomTimer.Elapsed.TotalMilliseconds / 600);
+                dungeonStore.RoomTicks.Add((roomCount, ticks));
                 if (roomCount > 1)
                     Log($"Room {roomCount} took {ticks} ticks ({ticks * 0.6:F1} s)");
                 dungeonStore.RoomTimer.Restart();
@@ -247,7 +278,6 @@ namespace Dungeons2
                         keys += $"{Registry.GetKeyName(i)} ";
                     }
                 string suffix = cnt == 1 ? string.Empty : "s";
-                //Log($"Found key{suffix}: {keys.Trim()}");
             }
             if (dungeonStore.KeyMask != newKeymask)
             {
@@ -255,14 +285,11 @@ namespace Dungeons2
                 dungeonStore.KeyMask |= newKeymask;
             }
             if (changed)
-                overlayWindow.Update();
+                _ = Dispatcher.InvokeAsync(overlayWindow.Update);
 
-            var pixels = mapKeybagImage.Pixels.ToArray();
-            var stride = mapKeybagImage.Width * 4;
-            Dispatcher.Invoke(() =>
-            {
-                dungeonStore.MapImage.WritePixels(new(0, 0, MapKeybagReader.MapWidth, MapKeybagReader.MapHeight), pixels, stride, 0);
-            });
+            uint[] pixels = mapKeybagImage.Pixels.ToArray();
+            int stride = mapKeybagImage.Width * 4;
+            Dispatcher.Invoke(() => dungeonStore.MapImage.WritePixels(new(0, 0, MapKeybagReader.MapWidth, MapKeybagReader.MapHeight), pixels, stride, 0));
         }
 
         private void HistoryGrid_CopyingRowClipboardContent(object sender, DataGridRowClipboardEventArgs e)
@@ -291,13 +318,13 @@ namespace Dungeons2
 
         private void TextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            Regex regex = NumericRegex();
+            var regex = NumericRegex();
             e.Handled = regex.IsMatch(e.Text);
         }
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            Process.Start("explorer.exe", e.Uri.OriginalString);
+            _ = Process.Start("explorer.exe", e.Uri.OriginalString);
             e.Handled = true;
         }
         private void InitializeGoogleSheets()
@@ -311,7 +338,7 @@ namespace Dungeons2
             string[] Scopes = [SheetsService.Scope.Spreadsheets];
             string serviceAccountKeyPath = "google-credentials.json";
 
-            GoogleCredential credential = CredentialFactory.FromFile<ServiceAccountCredential>(serviceAccountKeyPath)
+            var credential = CredentialFactory.FromFile<ServiceAccountCredential>(serviceAccountKeyPath)
                 .ToGoogleCredential()
                 .CreateScoped(Scopes);
 

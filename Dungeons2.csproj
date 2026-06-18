@@ -14,7 +14,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Images\winterface_ready.png" />
+    <None Remove="Images\highlighted_keys.png" />
+    <None Remove="Images\ring-of-kinship.ico" />
+    <None Remove="Images\skills.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -56,9 +58,12 @@
     <EmbeddedResource Include="Fonts\Small\colon.png" />
     <EmbeddedResource Include="Fonts\Small\minus.png" />
     <EmbeddedResource Include="Fonts\Small\plus.png" />
+    <EmbeddedResource Include="Images\highlighted_keys.png" />
     <EmbeddedResource Include="Images\keys.png" />
     <EmbeddedResource Include="Images\rooms.png" />
     <EmbeddedResource Include="Images\map_marker.png" />
+    <EmbeddedResource Include="Images\player_dots.png" />
+    <EmbeddedResource Include="Images\skills.png" />
     <EmbeddedResource Include="Images\winterface_marker.png" />
     <EmbeddedResource Include="Images\winterface_ready.png" />
   </ItemGroup>

@@ -66,13 +66,13 @@ namespace Dungeons2
             return mask;
         }
 
-        public readonly (Room[,], int) ReadMap()
+        public readonly (Map, int) ReadMap()
         {
-            var res = new Room[8, 8];
+            Map res = new();
             int roomcount = 0;
-            for (int x = 0; x < res.GetLength(0); x++)
-                for (int y = 0; y < res.GetLength(1); y++)
-                    res[x, y] = new Room();
+            for (int x = 0; x < res.Rooms.GetLength(0); x++)
+                for (int y = 0; y < res.Rooms.GetLength(1); y++)
+                    res.Rooms[x, y] = new Room();
             for (int i = 0; i < 8; ++i)
                 for (int j = 0; j < 8; ++j)
                 {
@@ -82,16 +82,16 @@ namespace Dungeons2
                     {
                         if (Enumerable.SequenceEqual(sig, Registry.RoomSignatures[k]))
                         {
-                            res[i, j] = new Room { Direction = (Direction)k, Opened = true };
+                            res.Rooms[i, j] = new Room { OutgoingDoors = (Directions)k, Opened = true };
                             roomcount++;
                             if (Image[x + 19, y + 18] == BaseColor)
-                                res[i, j].IsBase = true;
+                                res.Rooms[i, j].IsBase = true;
                             else if (Image[x + 8, y + 11] == BossColor)
-                                res[i, j].IsBoss = true;
+                                res.Rooms[i, j].IsBoss = true;
                             break;
                         }
                     }
-                    if (!res[i, j].Opened)
+                    if (!res.Rooms[i, j].Opened)
                     {
                         // Check for keys
                         for (int k = 0; k < 64; ++k)
@@ -99,11 +99,32 @@ namespace Dungeons2
                             double dist = Image.MatchDistance(Registry.GetMapKey(k), x + 3, y + 6, MatchThreshold);
                             if (dist < MatchThreshold)
                             {
-                                res[i, j].Key = k;
+                                res.Rooms[i, j].Key = k;
+                                break;
+                            }
+                            dist = Image.MatchDistance(Registry.GetHighlightedMapKey(k), x + 1, y + 2, MatchThreshold);
+                            if (dist < MatchThreshold)
+                            {
+                                res.Rooms[i, j].Key = k;
                                 break;
                             }
                         }
+                        if (res.Rooms[i, j].Key == -1)
+                        {
+                            for (int k = 0; k < Registry.SkillDoors.Length; ++k)
+                            {
+                                double dist = Image.MatchDistance(Registry.GetSkillIcon(k), x + 1, y + 2, MatchThreshold);
+                                if (dist < MatchThreshold)
+                                {
+                                    res.Rooms[i, j].SkillDoor = k;
+                                    break;
+                                }
+                            }
+                        }
                     }
+                    for (int p = 0; p < 5; ++p)
+                        if (Image.IsExactMatch(Registry.GetPlayerDot(p), x + Registry.PlayerDotOffsets[p].X, y + Registry.PlayerDotOffsets[p].Y))
+                            res.PlayerLocations[p] = new(i, j);
                 }
             return (res, roomcount);
         }

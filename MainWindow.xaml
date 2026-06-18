@@ -15,8 +15,6 @@
         <StackPanel HorizontalAlignment="Center">
             <WrapPanel Grid.Row="0" HorizontalAlignment="Center" Margin="10">
                 <ComboBox VerticalAlignment="Center" x:Name="RSWindowComboBox" Width="255" ItemsSource="{Binding RSWindows}" SelectedItem="{Binding SelectedWindow}"/>
-                <Label Content="Target RPM:" Margin="10,0,0,0"/>
-                <TextBox VerticalAlignment="Center" Text="{Binding TargetRpm, StringFormat={}{0:F1}}" PreviewTextInput="TextBox_PreviewTextInput" Width="60"/>
                 <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"><Hyperlink NavigateUri="Maps" RequestNavigate="Hyperlink_RequestNavigate">Maps</Hyperlink></TextBlock>
                 <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"><Hyperlink NavigateUri="Winterfaces" RequestNavigate="Hyperlink_RequestNavigate">Winterfaces</Hyperlink></TextBlock>
                 <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"><Hyperlink NavigateUri="floors.txt" RequestNavigate="Hyperlink_RequestNavigate">Floor log</Hyperlink></TextBlock>

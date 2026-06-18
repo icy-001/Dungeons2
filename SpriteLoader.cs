@@ -21,6 +21,21 @@ namespace Dungeons2
             return new(fullBuffer, convertedBitmap.PixelWidth, convertedBitmap.PixelHeight);
         }
 
+        public static RawImage LoadFromFile(string filePath)
+        {
+            using var stream = File.OpenRead(filePath);
+            BitmapImage bitmap = new();
+            bitmap.BeginInit();
+            bitmap.StreamSource = stream ?? throw new FileNotFoundException();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.EndInit();
+            FormatConvertedBitmap convertedBitmap = new(bitmap, System.Windows.Media.PixelFormats.Bgra32, null, 0);
+            int stride = convertedBitmap.PixelWidth * 4;
+            uint[] fullBuffer = new uint[convertedBitmap.PixelWidth * convertedBitmap.PixelHeight];
+            convertedBitmap.CopyPixels(fullBuffer, stride, 0);
+            return new(fullBuffer, convertedBitmap.PixelWidth, convertedBitmap.PixelHeight);
+        }
+
         public static uint[][] LoadSpriteSheet(string resourcePath, int rows, int cols, int spriteWidth, int spriteHeight)
         {
             using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourcePath)!;

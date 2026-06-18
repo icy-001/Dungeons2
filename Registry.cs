@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Windows.Graphics;
 
 namespace Dungeons2
 {
@@ -6,17 +7,48 @@ namespace Dungeons2
     {
         public const int KeybagKeyWidth = 18, KeybagKeyHeight = 16;
         public const int MapKeyWidth = 24, MapKeyHeight = 24;
+        public const int HighlightedKeyWidth = 29, HighlightedKeyHeight = 29;
         public const int KeybagPadding = 2;
         public static readonly string[] Colors = ["o", "s", "y", "gr", "b", "p", "c", "go"];
         public static readonly string[] Shapes = ["t", "d", "r", "p", "co", "cr", "w", "s"];
 
-        public static readonly uint[][] MapKeys = new uint[64][], KeybagKeys = new uint[64][];
+        public static readonly uint[][] MapKeys = new uint[64][], KeybagKeys = new uint[64][], HighlightedKeys = new uint[64][];
         public static readonly uint[][] RoomSignatures = new uint[16][];
         public const int MapMarkerWidth = 15, MapMarkerHeight = 15;
         public static RawImage MapMarker { get; private set; } = new();
         public const int WinterfaceMarkerWidth = 56, WinterfaceMarkerHeight = 10;
         public static RawImage WinterfaceMarker { get; private set; } = new();
         public static RawImage WinterfaceReady { get; private set; } = new();
+
+        public static readonly uint[][] PlayerDots = new uint[5][];
+        public const int PlayerDotWidth = 9, PlayerDotHeight = 9;
+        public static readonly PointInt32[] PlayerDotOffsets =
+        [
+            new(7, 2), new(21, 2), new(14, 9), new(7, 16), new(21, 16)
+        ];
+
+        private static readonly (string, int)[] skillDoorData = [
+            ("Crafting", 3),
+            ("Runecrafting", 5),
+            ("Smithing", 5),
+            ("Woodcutting", 5),
+            ("Prayer", 6),
+            ("Mining", 7),
+            ("Magic", 8),
+            ("Firemaking", 9),
+            ("Strength", 9),
+            ("Construction", 3),
+            ("Herblore", 4),
+            ("Invention", 4),
+            ("Thieving", 4),
+            ("Summoning", 5),
+            ("Archaeology", 6),
+            ("Farming", 6),
+            ("Divination", 6),
+            ("Agility", 8),
+        ];
+
+        public static readonly SkillDoor[] SkillDoors = new SkillDoor[skillDoorData.Length];
 
         static bool isInitialized;
 
@@ -42,6 +74,12 @@ namespace Dungeons2
             WinterfaceMarker = SpriteLoader.LoadSprite("Dungeons2.Images.winterface_marker.png");
             WinterfaceReady = SpriteLoader.LoadSprite("Dungeons2.Images.winterface_ready.png");
 
+            SpriteLoader.LoadSpriteSheet("Dungeons2.Images.player_dots.png", 1, 5, PlayerDotWidth, PlayerDotHeight).CopyTo(PlayerDots, 0);
+            SpriteLoader.LoadSpriteSheet("Dungeons2.Images.highlighted_keys.png", 8, 8, HighlightedKeyWidth, HighlightedKeyHeight).CopyTo(HighlightedKeys, 0);
+            var skillIcons = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.skills.png", 1, 18, HighlightedKeyWidth, HighlightedKeyHeight);
+            for (int i = 0; i < skillDoorData.Length; ++i)
+                SkillDoors[i] = new(skillDoorData[i].Item1, skillDoorData[i].Item2, new(skillIcons[i], HighlightedKeyWidth, HighlightedKeyHeight));
+
             isInitialized = true;
         }
 
@@ -58,6 +96,21 @@ namespace Dungeons2
         public static RawImageView GetMapKey(int index)
         {
             return new(MapKeys[index], MapKeyWidth, MapKeyHeight);
+        }
+
+        public static RawImageView GetHighlightedMapKey(int index)
+        {
+            return new(HighlightedKeys[index], HighlightedKeyWidth, HighlightedKeyHeight);
+        }
+
+        public static RawImage GetSkillIcon(int index)
+        {
+            return SkillDoors[index].Image;
+        }
+
+        public static RawImageView GetPlayerDot(int index)
+        {
+            return new(PlayerDots[index], PlayerDotWidth, PlayerDotHeight);
         }
 
         public static uint[] ComputeSignature(RawImageView image, int offX = 0, int offY = 0)
