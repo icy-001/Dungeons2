@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Drawing;
+﻿using System.Drawing;
 
 namespace Dungeons2
 {
@@ -18,7 +17,7 @@ namespace Dungeons2
         public static readonly Color MapTopRightCornerColor = Color.FromArgb(122, 52, 44);
         public static readonly Color KeybagBorderColor = Color.FromArgb(93, 46, 21);
         public static readonly uint BaseColor = (uint)Color.FromArgb(150, 145, 105).ToArgb();
-        public static readonly uint BossColor = (uint)Color.FromArgb(63, 20, 13).ToArgb();
+        public static readonly uint BossColor = (uint)Color.FromArgb(132, 57, 46).ToArgb();
 
         public readonly RawImageView Image = img;
 
@@ -31,16 +30,11 @@ namespace Dungeons2
         }
 
         // Check if there is a map.
-        public readonly bool HasMap()
-        {
+        public readonly bool HasMap() =>
             // Check for X. On Large, this is (265, 0). On medium and small, this is (137, 0).
-            return Image.IsExactMatch(Registry.MapMarker, 265, 0) || Image.IsExactMatch(Registry.MapMarker, 137, 0);
-        }
+            Image.IsExactMatch(Registry.MapMarker, 265, 0) || Image.IsExactMatch(Registry.MapMarker, 137, 0);
 
-        public readonly bool HasKeybag()
-        {
-            return Image.GetColor(0, KeybagStartY) == KeybagBorderColor;
-        }
+        public readonly bool HasKeybag() => Image.GetColor(0, KeybagStartY) == KeybagBorderColor;
 
         public readonly ulong ReadKeybag()
         {
@@ -82,12 +76,18 @@ namespace Dungeons2
                     {
                         if (Enumerable.SequenceEqual(sig, Registry.RoomSignatures[k]))
                         {
-                            res.Rooms[i, j] = new Room { OutgoingDoors = (Directions)k, Opened = true };
+                            res.Rooms[i, j] = new Room { Doors = (Directions)k, Opened = true };
                             roomcount++;
-                            if (Image[x + 19, y + 18] == BaseColor)
+                            if (Image[x + 22, y + 13] == BaseColor)
+                            {
                                 res.Rooms[i, j].IsBase = true;
-                            else if (Image[x + 8, y + 11] == BossColor)
+                                res.Base = new(i, j);
+                            }
+                            else if (Image[x + 21, y + 11] == BossColor)
+                            {
                                 res.Rooms[i, j].IsBoss = true;
+                                res.Boss = new(i, j);
+                            }
                             break;
                         }
                     }
@@ -126,6 +126,7 @@ namespace Dungeons2
                         if (Image.IsExactMatch(Registry.GetPlayerDot(p), x + Registry.PlayerDotOffsets[p].X, y + Registry.PlayerDotOffsets[p].Y))
                             res.PlayerLocations[p] = new(i, j);
                 }
+            res.AssignParents();
             return (res, roomcount);
         }
     }

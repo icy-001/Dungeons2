@@ -1,6 +1,6 @@
 ﻿namespace Dungeons2
 {
-    public record FloorData(
+    public record struct FloorData(
         int Id = 0,
         DateTimeOffset Timestamp = new(),
         string Teammates = "",
@@ -14,5 +14,11 @@
         int TotalXP = 0,
         int RoomCount = 0,
         int DeadEnds = 0,
-        string Notes = "");
+        int SkillDoors = 0,
+        int SkillDoorTicks = 0,
+        int PossiblePuzzleRooms = 0,
+        string Notes = "")
+    {
+        public readonly string TabSeparatedEntry() => $"{Id}\t{Timestamp:G}\t{Teammates}\t{FloorNumber}\t{Size}\t{Time}\t{Bonus}\t{MobsKilledMod}\t{Boost}\t{TotalMod}\t{TotalXP}\t{RoomCount}\t{DeadEnds}\t{SkillDoors}\t{SkillDoorTicks}\t{PossiblePuzzleRooms}\t{Notes}\n";
+    }
 }

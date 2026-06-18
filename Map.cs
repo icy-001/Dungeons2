@@ -1,20 +1,32 @@
-﻿using Windows.Graphics;
-
-namespace Dungeons2
+﻿namespace Dungeons2
 {
+    public readonly record struct Coord(int Row, int Col)
+    {
+        public static readonly Coord Nothing = new(-1, -1);
+    }
+
     public class Map
     {
         public Room[,] Rooms { get; } = new Room[8, 8];
-        public PointInt32?[] PlayerLocations { get; } = new PointInt32?[5];
+        public Coord Base { get; set; } = Coord.Nothing;
+        public Coord Boss { get; set; } = Coord.Nothing;
+        public Coord?[] PlayerLocations { get; } = new Coord?[5];
         public int PlayerCount => PlayerLocations.Count(p => p.HasValue);
+
+        static readonly Directions[] SingleDirections = [Directions.W, Directions.E, Directions.S, Directions.N];
+
+        public Map()
+        {
+            Clear();
+        }
 
         public void Clear()
         {
-            for (int r = 0; r < 8; r++)
-                for (int c = 0; c < 8; c++)
-                    Rooms[r, c] = new();
-            for (int i = 0; i < PlayerLocations.Length; i++)
-                PlayerLocations[i] = null;
+            for (int i = 0; i < 8; i++)
+                for (int j = 0; j < 8; j++)
+                    Rooms[i, j] = new();
+            for (int p = 0; p < PlayerLocations.Length; p++)
+                PlayerLocations[p] = null;
         }
 
         public void Merge(Map other)
@@ -22,7 +34,88 @@ namespace Dungeons2
             for (int r = 0; r < 8; r++)
                 for (int c = 0; c < 8; c++)
                     Rooms[r, c].Merge(other.Rooms[r, c]);
+            if (other.Base != Coord.Nothing)
+                Base = other.Base;
+            if (other.Boss != Coord.Nothing)
+                Boss = other.Boss;
             other.PlayerLocations.CopyTo(PlayerLocations, 0);
         }
+
+        public void AssignParents()
+        {
+            if (Base == Coord.Nothing)
+                return;
+
+            bool[,] visited = new bool[8, 8];
+
+            void Visit(Coord c, Directions dir)
+            {
+                var (i, j) = c;
+                if (visited[i, j])
+                    return;
+                visited[i, j] = true;
+                Rooms[i, j].Parent = Flip(dir);
+                foreach (var d in SingleDirections)
+                    if (Rooms[i, j].Doors.HasFlag(d))
+                        Visit(Add(c, d), d);
+            }
+
+            Visit(Base, Directions.None);
+        }
+
+        public IEnumerable<Room> Neighbors(int i, int j)
+        {
+            var dir = Rooms[i, j].Doors;
+            if (dir.HasFlag(Directions.W))
+                yield return Rooms[i, j - 1];
+            if (dir.HasFlag(Directions.E))
+                yield return Rooms[i, j + 1];
+            if (dir.HasFlag(Directions.S))
+                yield return Rooms[i + 1, j];
+            if (dir.HasFlag(Directions.N))
+                yield return Rooms[i - 1, j];
+        }
+
+        public int PossiblePuzzleCount()
+        {
+            int res = 0;
+            for (int i = 0; i < 8; i++)
+                for (int j = 0; j < 8; j++)
+                    if (Rooms[i, j].Opened && !Rooms[i, j].IsBase && !Rooms[i, j].IsBoss && !Rooms[i, j].IsDeadEnd && Neighbors(i, j).All(r => r.Key == -1))
+                        ++res;
+            return res;
+        }
+
+        public (int Count, int Ticks) SkillDoorStats()
+        {
+            int count = 0, ticks = 0;
+            for (int i = 0; i < 8; i++)
+                for (int j = 0; j < 8; j++)
+                    if (Rooms[i, j].Opened && Rooms[i, j].SkillDoor != -1)
+                    {
+                        var entry = Registry.SkillDoors[Rooms[i, j].SkillDoor];
+                        ++count;
+                        ticks += entry.Ticks;
+                    }
+            return (count, ticks);
+        }
+
+        static Coord Add(Coord p, Directions d) => d switch
+        {
+            Directions.W => new(p.Row, p.Col - 1),
+            Directions.E => new(p.Row, p.Col + 1),
+            Directions.S => new(p.Row + 1, p.Col),
+            Directions.N => new(p.Row - 1, p.Col),
+            _ => throw new InvalidOperationException("Direction must be single.")
+        };
+
+        static Directions Flip(Directions d) => d switch
+        {
+            Directions.W => Directions.E,
+            Directions.E => Directions.W,
+            Directions.S => Directions.N,
+            Directions.N => Directions.S,
+            _ => Directions.None
+        };
     }
 }

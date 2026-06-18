@@ -28,24 +28,24 @@ namespace Dungeons2
         ];
 
         private static readonly (string, int)[] skillDoorData = [
-            ("Crafting", 3),
-            ("Runecrafting", 5),
-            ("Smithing", 5),
-            ("Woodcutting", 5),
-            ("Prayer", 6),
-            ("Mining", 7),
-            ("Magic", 8),
-            ("Firemaking", 9),
-            ("Strength", 9),
-            ("Construction", 3),
-            ("Herblore", 4),
-            ("Invention", 4),
-            ("Thieving", 4),
-            ("Summoning", 5),
-            ("Archaeology", 6),
-            ("Farming", 6),
-            ("Divination", 6),
-            ("Agility", 8),
+            ("Crafting", 2),
+            ("Runecrafting", 4),
+            ("Smithing", 4),
+            ("Woodcutting", 4),
+            ("Prayer", 5),
+            ("Mining", 6),
+            ("Magic", 7),
+            ("Firemaking", 8),
+            ("Strength", 8),
+            ("Construction", 2),
+            ("Herblore", 3),
+            ("Invention", 3),
+            ("Thieving", 3),
+            ("Summoning", 4),
+            ("Archaeology", 5),
+            ("Farming", 5),
+            ("Divination", 5),
+            ("Agility", 7),
         ];
 
         public static readonly SkillDoor[] SkillDoors = new SkillDoor[skillDoorData.Length];
@@ -76,42 +76,24 @@ namespace Dungeons2
 
             SpriteLoader.LoadSpriteSheet("Dungeons2.Images.player_dots.png", 1, 5, PlayerDotWidth, PlayerDotHeight).CopyTo(PlayerDots, 0);
             SpriteLoader.LoadSpriteSheet("Dungeons2.Images.highlighted_keys.png", 8, 8, HighlightedKeyWidth, HighlightedKeyHeight).CopyTo(HighlightedKeys, 0);
-            var skillIcons = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.skills.png", 1, 18, HighlightedKeyWidth, HighlightedKeyHeight);
+            uint[][] skillIcons = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.skills.png", 1, 18, HighlightedKeyWidth, HighlightedKeyHeight);
             for (int i = 0; i < skillDoorData.Length; ++i)
                 SkillDoors[i] = new(skillDoorData[i].Item1, skillDoorData[i].Item2, new(skillIcons[i], HighlightedKeyWidth, HighlightedKeyHeight));
 
             isInitialized = true;
         }
 
-        public static string GetKeyName(int index)
-        {
-            return Colors[index / 8] + Shapes[index % 8];
-        }
+        public static string GetKeyName(int index) => Colors[index / 8] + Shapes[index % 8];
 
-        public static RawImageView GetKeybagKey(int index)
-        {
-            return new(KeybagKeys[index], KeybagKeyWidth, KeybagKeyHeight);
-        }
+        public static RawImageView GetKeybagKey(int index) => new(KeybagKeys[index], KeybagKeyWidth, KeybagKeyHeight);
 
-        public static RawImageView GetMapKey(int index)
-        {
-            return new(MapKeys[index], MapKeyWidth, MapKeyHeight);
-        }
+        public static RawImageView GetMapKey(int index) => new(MapKeys[index], MapKeyWidth, MapKeyHeight);
 
-        public static RawImageView GetHighlightedMapKey(int index)
-        {
-            return new(HighlightedKeys[index], HighlightedKeyWidth, HighlightedKeyHeight);
-        }
+        public static RawImageView GetHighlightedMapKey(int index) => new(HighlightedKeys[index], HighlightedKeyWidth, HighlightedKeyHeight);
 
-        public static RawImage GetSkillIcon(int index)
-        {
-            return SkillDoors[index].Image;
-        }
+        public static RawImage GetSkillIcon(int index) => SkillDoors[index].Image;
 
-        public static RawImageView GetPlayerDot(int index)
-        {
-            return new(PlayerDots[index], PlayerDotWidth, PlayerDotHeight);
-        }
+        public static RawImageView GetPlayerDot(int index) => new(PlayerDots[index], PlayerDotWidth, PlayerDotHeight);
 
         public static uint[] ComputeSignature(RawImageView image, int offX = 0, int offY = 0)
         {

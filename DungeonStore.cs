@@ -23,7 +23,7 @@ namespace Dungeons2
             int count = 0;
             for (int r = 0; r < 8; r++)
                 for (int c = 0; c < 8; c++)
-                    if (Map.Rooms[r, c].OutgoingDoors is Directions.W or
+                    if (Map.Rooms[r, c].Doors is Directions.W or
                         Directions.E or
                         Directions.S or
                         Directions.N)

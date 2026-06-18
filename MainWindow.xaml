@@ -79,6 +79,15 @@
                 <DataGridTextColumn Header="DE" 
                         Binding="{Binding DeadEnds}" 
                         Width="40" />
+                <DataGridTextColumn Header="Skill" 
+                        Binding="{Binding SkillDoors}" 
+                        Width="40" />
+                <DataGridTextColumn Header="Skill Ticks" 
+                        Binding="{Binding SkillDoorTicks}" 
+                        Width="40" />
+                <DataGridTextColumn Header="PP" 
+                        Binding="{Binding PossiblePuzzleRooms}" 
+                        Width="40" />
                 <DataGridTextColumn Header="Notes" 
                         Binding="{Binding Notes}" 
                         Width="*" />

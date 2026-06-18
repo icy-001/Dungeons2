@@ -34,7 +34,7 @@ namespace Dungeons2
             InitializeComponent();
             dungeonStore = store;
 
-            trackerTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
+            trackerTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
             trackerTimer.Tick += (sender, args) =>
             {
                 TrackingLoop();
@@ -96,6 +96,16 @@ namespace Dungeons2
                     }
                 }
             currentKeyMask = dungeonStore.KeyMask;
+        }
+
+        public void ClearRects()
+        {
+            for (int k = 0; k < 64; ++k)
+                if (activeRects[k] is not null)
+                {
+                    HighlightCanvas.Children.Remove(activeRects[k]);
+                    activeRects[k] = null;
+                }
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -168,12 +178,13 @@ namespace Dungeons2
             if (elapsed.TotalMilliseconds < 0)
                 return;
             double rpm = CalculateRpm(c, elapsed.TotalMinutes);
-            double targetRpm = dungeonStore.Map.PlayerCount <= Settings.Default.TargetRpms.Length
+            double targetRpm = dungeonStore.Map.PlayerCount > 0 && dungeonStore.Map.PlayerCount <= Settings.Default.TargetRpms.Length
                 ? Settings.Default.TargetRpms[dungeonStore.Map.PlayerCount - 1]
                 : 0;
             double ratio = rpm / targetRpm;
             int ticks = (int)Math.Ceiling((double)dungeonStore.RoomTimer.ElapsedMilliseconds / 600);
-            StatusText.Text = $"Rooms: {c,-2}  •  Dead ends: {d,-2}  •  RPM: {rpm:F1}\nTicks since last room: {ticks}";
+            var (skillCount, skillTicks) = dungeonStore.Map.SkillDoorStats();
+            StatusText.Text = $"Rooms: {c,-2}  •  Dead ends: {d,-2}  •  RPM: {rpm:F1}\nSkill: {skillCount} | {skillTicks}  •  PP: {dungeonStore.Map.PossiblePuzzleCount()}  •  Ticks since last room: {ticks}";
             StatusBorder.Background = RpmRatioToBrush(ratio);
         }
 

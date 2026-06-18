@@ -106,12 +106,7 @@ namespace Dungeons2
         {
             if (e.Key == Key.D && (Keyboard.Modifiers & ModifierKeys.Shift) != 0)
             {
-                StringBuilder sb = new();
-                for (int i = 0; i < 8; ++i)
-                    for (int j = 0; j < 8; ++j)
-                        if (dungeonStore.Map.Rooms[i, j].SkillDoor != -1)
-                            _ = sb.Append(Registry.SkillDoors[dungeonStore.Map.Rooms[i, j].SkillDoor].Name + " ");
-                Log(sb.ToString());
+                Log(dungeonStore.Map.Boss.ToString());
             }
         }
 
@@ -201,12 +196,16 @@ namespace Dungeons2
                         }
                     }
 
+                    var (skillCount, skillTicks) = dungeonStore.Map.SkillDoorStats();
                     var floorData = winterfaceReader.Read() with
                     {
                         Id = FloorHistory.Count + 1,
                         Timestamp = dungeonStore.LastActiveTime,
                         RoomCount = dungeonStore.RoomCount,
                         DeadEnds = dungeonStore.DeadEndCount(),
+                        SkillDoors = skillCount,
+                        SkillDoorTicks = skillTicks,
+                        PossiblePuzzleRooms = dungeonStore.Map.PossiblePuzzleCount(),
                         Notes = notesSB.ToString()
                     };
                     if (floorData.TotalXP == 0)
@@ -221,7 +220,7 @@ namespace Dungeons2
                         {
                             Log($"Floor {dungeonStore.FloorCounter} time: {floorData.Time}");
                             FloorHistory.Add(floorData);
-                            File.AppendAllText("floors.txt", $"{floorData.Id}\t{floorData.Timestamp:G}\t{floorData.Teammates}\t{floorData.FloorNumber}\t{floorData.Size}\t{floorData.Time}\t{floorData.Bonus}\t{floorData.MobsKilledMod}\t{floorData.Boost}\t{floorData.TotalMod}\t{floorData.TotalXP}\t{floorData.RoomCount}\t{floorData.DeadEnds}\t{floorData.Notes}\n");
+                            File.AppendAllText("floors.txt", floorData.TabSeparatedEntry());
                             // Save map and winterface images
                             ImageWriter.SaveToPng(dungeonStore.MapImage, $"{Settings.Default.MapSaveLocation}\\{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png");
                             ImageWriter.SaveCroppedToPng(winterfaceImage2, $"{Settings.Default.WinterfaceSaveLocation}\\{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png", 0, 0, WinterfaceReader.WinterfaceWidth, WinterfaceReader.WinterfaceHeight);
@@ -249,6 +248,7 @@ namespace Dungeons2
                 dungeonStore.Map.Clear();
                 dungeonStore.RoomTicks.Clear();
                 dungeonStore.RoomTimer.Restart();
+                Dispatcher.Invoke(overlayWindow.ClearRects);
                 Log($"Start of floor {++dungeonStore.FloorCounter}");
             }
             dungeonStore.LastActiveTime = DateTimeOffset.Now;
