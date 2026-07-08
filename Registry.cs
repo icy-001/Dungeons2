@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Windows.Graphics;
 
 namespace Dungeons2
@@ -13,6 +15,7 @@ namespace Dungeons2
         public static readonly string[] Shapes = ["t", "d", "r", "p", "co", "cr", "w", "s"];
 
         public static readonly uint[][] MapKeys = new uint[64][], KeybagKeys = new uint[64][], HighlightedKeys = new uint[64][];
+        public static readonly BitmapSource[] RoomBitmaps = new BitmapSource[16];
         public static readonly uint[][] RoomSignatures = new uint[16][];
         public const int MapMarkerWidth = 15, MapMarkerHeight = 15;
         public static RawImage MapMarker { get; private set; } = new();
@@ -68,7 +71,10 @@ namespace Dungeons2
 
             uint[][] rooms = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.rooms.png", 1, 16, 32, 32);
             for (int i = 0; i < 16; ++i)
+            {
+                RoomBitmaps[i] = BitmapSource.Create(32, 32, 96, 96, PixelFormats.Bgra32, null, rooms[i], 32 * 4);
                 RoomSignatures[i] = ComputeSignature(new(rooms[i], 32, 32));
+            }
 
             MapMarker = SpriteLoader.LoadSprite("Dungeons2.Images.map_marker.png");
             WinterfaceMarker = SpriteLoader.LoadSprite("Dungeons2.Images.winterface_marker.png");
@@ -83,7 +89,7 @@ namespace Dungeons2
             isInitialized = true;
         }
 
-        public static string GetKeyName(int index) => Colors[index / 8] + Shapes[index % 8];
+        public static string GetKeyName(int index) => index < 0 ? "none" : Colors[index / 8] + Shapes[index % 8];
 
         public static RawImageView GetKeybagKey(int index) => new(KeybagKeys[index], KeybagKeyWidth, KeybagKeyHeight);
 

@@ -10,15 +10,9 @@ namespace Dungeons2
 
         public RawImageView Image { get; } = img;
 
-        public readonly Color GetColor(int x, int y)
-        {
-            return Image.GetColor(x, y);
-        }
+        public readonly Color GetColor(int x, int y) => Image.GetColor(x, y);
 
-        public bool HasWinterface()
-        {
-            return Image.IsExactMatch(Registry.WinterfaceMarker, 0, 0) && Image.IsExactMatch(Registry.WinterfaceReady, 334, 299);
-        }
+        public bool HasWinterface() => Image.IsExactMatch(Registry.WinterfaceMarker, 0, 0) && Image.IsExactMatch(Registry.WinterfaceReady, 334, 299);
 
         public string ReadField(Field field)
         {
@@ -76,10 +70,7 @@ namespace Dungeons2
             const int begin = 115, end = 295;
             int low_x = begin, high_x = end;
 
-            static bool pass(in WinterfaceReader @this, int x)
-            {
-                return @this.GetColor(x, y).R >= 142;
-            }
+            static bool pass(in WinterfaceReader @this, int x) => @this.GetColor(x, y).R >= 142;
 
             if (!pass(this, low_x + 1))
                 return 0;
@@ -126,9 +117,6 @@ namespace Dungeons2
             return -1;
         }
 
-        static int ParseOrDefault(string s)
-        {
-            return int.TryParse(s, out int res) ? res : 0;
-        }
+        static int ParseOrDefault(string s) => int.TryParse(s, out int res) ? res : 0;
     }
 }

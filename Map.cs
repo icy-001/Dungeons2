@@ -3,22 +3,19 @@
     public readonly record struct Coord(int Row, int Col)
     {
         public static readonly Coord Nothing = new(-1, -1);
+        public string ToChessString() => $"{(char)('a' + Col)}{8 - Row}";
     }
 
     public class Map
     {
+        static readonly Directions[] SingleDirections = [Directions.W, Directions.E, Directions.S, Directions.N];
+
         public Room[,] Rooms { get; } = new Room[8, 8];
         public Coord Base { get; set; } = Coord.Nothing;
         public Coord Boss { get; set; } = Coord.Nothing;
         public Coord?[] PlayerLocations { get; } = new Coord?[5];
         public int PlayerCount => PlayerLocations.Count(p => p.HasValue);
-
-        static readonly Directions[] SingleDirections = [Directions.W, Directions.E, Directions.S, Directions.N];
-
-        public Map()
-        {
-            Clear();
-        }
+        public Map() { Clear(); }
 
         public void Clear()
         {
@@ -29,16 +26,30 @@
                 PlayerLocations[p] = null;
         }
 
-        public void Merge(Map other)
+        /// <summary>
+        /// Merges this map with another and returns true if there was a change.
+        /// </summary>
+        /// <param name="other">The other map.</param>
+        /// <returns>True if there was a change; otherwise, false.</returns>
+        public bool Merge(Map other)
         {
+            bool changed = false;
             for (int r = 0; r < 8; r++)
                 for (int c = 0; c < 8; c++)
-                    Rooms[r, c].Merge(other.Rooms[r, c]);
-            if (other.Base != Coord.Nothing)
+                    changed |= Rooms[r, c].Merge(other.Rooms[r, c]);
+            if (other.Base != Coord.Nothing && Base != other.Base)
+            {
                 Base = other.Base;
-            if (other.Boss != Coord.Nothing)
+                changed = true;
+            }
+            if (other.Boss != Coord.Nothing && Boss != other.Boss)
+            {
                 Boss = other.Boss;
+                changed = true;
+            }
+            changed |= !Enumerable.SequenceEqual(PlayerLocations, other.PlayerLocations);
             other.PlayerLocations.CopyTo(PlayerLocations, 0);
+            return changed;
         }
 
         public void AssignParents()
@@ -63,17 +74,45 @@
             Visit(Base, Directions.None);
         }
 
-        public IEnumerable<Room> Neighbors(int i, int j)
+        public IEnumerable<Room> Children(int i, int j)
         {
-            var dir = Rooms[i, j].Doors;
-            if (dir.HasFlag(Directions.W))
-                yield return Rooms[i, j - 1];
-            if (dir.HasFlag(Directions.E))
-                yield return Rooms[i, j + 1];
-            if (dir.HasFlag(Directions.S))
-                yield return Rooms[i + 1, j];
-            if (dir.HasFlag(Directions.N))
-                yield return Rooms[i - 1, j];
+            foreach (var d in SingleDirections)
+                if (Rooms[i, j].Doors.HasFlag(d) && Rooms[i, j].Parent != d)
+                {
+                    var (ii, jj) = Add(new(i, j), d);
+                    yield return Rooms[ii, jj];
+                }
+        }
+
+        public int DeadEndCount()
+        {
+            int count = 0;
+            for (int r = 0; r < 8; r++)
+                for (int c = 0; c < 8; c++)
+                    if (Rooms[r, c].IsDeadEnd)
+                        ++count;
+            return count;
+        }
+
+        /// <summary>
+        /// Only works for solos.
+        /// </summary>
+        /// <returns>Returns pair (dewks, denks).</returns>
+        public (int Dewks, int Denks) DeadEndCountExtended()
+        {
+            int dewks = 0, denks = 0;
+            for (int r = 0; r < 8; r++)
+                for (int c = 0; c < 8; c++)
+                {
+                    var room = Rooms[r, c];
+                    if (room.IsDeadEnd)
+                    {
+                        if (room.Key == -1)
+                            ++denks;
+                        else ++dewks;
+                    }
+                }
+            return (dewks, denks);
         }
 
         public int PossiblePuzzleCount()
@@ -81,7 +120,7 @@
             int res = 0;
             for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)
-                    if (Rooms[i, j].Opened && !Rooms[i, j].IsBase && !Rooms[i, j].IsBoss && !Rooms[i, j].IsDeadEnd && Neighbors(i, j).All(r => r.Key == -1))
+                    if (Rooms[i, j].Opened && !Rooms[i, j].IsDeadEnd && Children(i, j).All(r => r.Lock == -1))
                         ++res;
             return res;
         }

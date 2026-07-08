@@ -5,8 +5,8 @@ using Google.Apis.Sheets.v4.Data;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Numerics;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -21,8 +21,7 @@ namespace Dungeons2
     public partial class MainWindow : Window
     {
         private readonly CancellationTokenSource cts = new();
-        private readonly DungeonStore dungeonStore = new();
-        private readonly GameCapture capture = new();
+        private readonly GameCapture capture;
         private readonly OverlayWindow overlayWindow;
         private SheetsService? sheetsService;
 
@@ -41,7 +40,8 @@ namespace Dungeons2
             _ = Directory.CreateDirectory(Settings.Default.MapSaveLocation);
             _ = Directory.CreateDirectory(Settings.Default.WinterfaceSaveLocation);
 
-            overlayWindow = new(dungeonStore);
+            capture = new();
+            overlayWindow = new();
             overlayWindow.Show();
 
             InitializeGoogleSheets();
@@ -60,13 +60,15 @@ namespace Dungeons2
                     Log($"Setting RS window to {value}");
                     capture?.SetTarget(new((ulong)(value?.Handle ?? IntPtr.Zero)));
                     overlayWindow.RsHwnd = value?.Handle ?? IntPtr.Zero;
-                    dungeonStore.KeyMask = 0;
-                    dungeonStore.InFloor = false;
+                    DungeonStore.KeyMask = 0;
+                    DungeonStore.Active = false;
                 }
             }
         }
         public static bool LogToSheet { get => Settings.Default.LogToSheet; set => Settings.Default.LogToSheet = value; }
         public static string SpreadsheetId { get => Settings.Default.SpreadsheetId; set => Settings.Default.SpreadsheetId = value; }
+
+        static DungeonStore DungeonStore => DungeonStore.Instance;
 
         protected override void OnSourceInitialized(EventArgs e)
         {
@@ -106,7 +108,17 @@ namespace Dungeons2
         {
             if (e.Key == Key.D && (Keyboard.Modifiers & ModifierKeys.Shift) != 0)
             {
-                Log(dungeonStore.Map.Boss.ToString());
+                //var lines = File.ReadAllLines("C:\\Temp\\data.csv");
+                //var line = lines[600];
+                //var tokens = line.Split(',');
+                //var timestamp = DateTimeOffset.Parse(tokens[0]);
+                //var rc = tokens[1];
+                //var deadEnds = tokens[2];
+                //var mapFile = @$"C:\Projects\Dungeons2\bin\Release\net10.0-windows10.0.26100.0\Maps\{timestamp:yyyy-MM-dd HH-mm-ss}.png";
+                //Log($"{mapFile}, {File.Exists(mapFile)}, {rc}, {deadEnds}");
+
+                //AnnotatedMapImage.Source = AnnotatedMapRenderer.DrawMap(280, 280, DungeonStore.Map);
+                AnnotatedMapImage.Source = DungeonStore.MapImage;
             }
         }
 
@@ -175,19 +187,19 @@ namespace Dungeons2
             bool hasMap = reader.HasMap();
             if (!hasMap)
             {
-                bool reset = DateTimeOffset.Now - dungeonStore.LastActiveTime > TimeSpan.FromSeconds(6);
+                bool reset = DateTimeOffset.Now - DungeonStore.LastActiveTime > TimeSpan.FromSeconds(6);
                 // Check winterface
                 using var winterfaceFrame = capture.CaptureWinterface();
                 var winterfaceImage = RawImageView.FromFrame(winterfaceFrame);
                 WinterfaceReader winterfaceReader = new(winterfaceImage);
 
                 bool winterfaceSuccess = false;
-                if (winterfaceReader.HasWinterface() && (FloorHistory.Count == 0 || FloorHistory[^1].Timestamp != dungeonStore.LastActiveTime))
+                if (winterfaceReader.HasWinterface() && (FloorHistory.Count == 0 || FloorHistory[^1].Timestamp != DungeonStore.LastActiveTime))
                 {
                     StringBuilder notesSB = new();
-                    for (int i = 0; i < dungeonStore.RoomTicks.Count; ++i)
+                    for (int i = 0; i < DungeonStore.RoomTicks.Count; ++i)
                     {
-                        var (r, ticks) = dungeonStore.RoomTicks[i];
+                        var (r, ticks) = DungeonStore.RoomTicks[i];
                         if (ticks >= 20)
                         {
                             if (notesSB.Length > 0)
@@ -196,18 +208,19 @@ namespace Dungeons2
                         }
                     }
 
-                    var (skillCount, skillTicks) = dungeonStore.Map.SkillDoorStats();
+                    var (skillCount, skillTicks) = DungeonStore.Map.SkillDoorStats();
                     var floorData = winterfaceReader.Read() with
                     {
                         Id = FloorHistory.Count + 1,
-                        Timestamp = dungeonStore.LastActiveTime,
-                        RoomCount = dungeonStore.RoomCount,
-                        DeadEnds = dungeonStore.DeadEndCount(),
+                        Timestamp = DungeonStore.LastActiveTime,
+                        RoomCount = DungeonStore.RoomCount,
+                        DeadEnds = DungeonStore.Map.DeadEndCount(),
                         SkillDoors = skillCount,
                         SkillDoorTicks = skillTicks,
-                        PossiblePuzzleRooms = dungeonStore.Map.PossiblePuzzleCount(),
+                        PossiblePuzzleRooms = DungeonStore.Map.PossiblePuzzleCount(),
                         Notes = notesSB.ToString()
                     };
+                    Log($"Floor {DungeonStore.FloorCounter} time={floorData.Time} | key count={BitOperations.PopCount(DungeonStore.KeyMask)}");
                     if (floorData.TotalXP == 0)
                     {
                         Log("Caught winterface frame where total XP didn't show up; skipping");
@@ -218,13 +231,12 @@ namespace Dungeons2
                         RawImage winterfaceImage2 = new(winterfaceImage.Pixels.ToArray(), winterfaceImage.Width, winterfaceImage.Height);
                         Dispatcher.Invoke(() =>
                         {
-                            Log($"Floor {dungeonStore.FloorCounter} time: {floorData.Time}");
                             FloorHistory.Add(floorData);
-                            File.AppendAllText("floors.txt", floorData.TabSeparatedEntry());
+                            File.AppendAllText("floors.txt", floorData.ToTabSeparatedString());
                             // Save map and winterface images
-                            ImageWriter.SaveToPng(dungeonStore.MapImage, $"{Settings.Default.MapSaveLocation}\\{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png");
+                            ImageWriter.SaveToPng(DungeonStore.MapImage, $"{Settings.Default.MapSaveLocation}\\{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png");
                             ImageWriter.SaveCroppedToPng(winterfaceImage2, $"{Settings.Default.WinterfaceSaveLocation}\\{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png", 0, 0, WinterfaceReader.WinterfaceWidth, WinterfaceReader.WinterfaceHeight);
-                            if (Settings.Default.LogToSheet)
+                            if (Settings.Default.LogToSheet && floorData.Bonus == 1)
                                 _ = AppendToGoogleSheets();
                         });
                     }
@@ -232,64 +244,60 @@ namespace Dungeons2
                 }
                 if (reset)
                 {
-                    if (dungeonStore.InFloor && !winterfaceSuccess)
+                    if (DungeonStore.Active && !winterfaceSuccess)
                         Log("Out of floor or map turned off; resetting.");
-                    dungeonStore.KeyMask = 0;
-                    dungeonStore.InFloor = false;
+                    DungeonStore.KeyMask = 0;
+                    DungeonStore.Active = false;
                 }
                 return;
             }
-            if (!dungeonStore.InFloor)
+            if (!DungeonStore.Active)
             {
-                dungeonStore.InFloor = true;
-                dungeonStore.KeyMask = 0;
-                dungeonStore.RoomCount = 0;
-                dungeonStore.FloorStartTime = DateTimeOffset.Now - TimeSpan.FromMilliseconds(1150); // Empirical
-                dungeonStore.Map.Clear();
-                dungeonStore.RoomTicks.Clear();
-                dungeonStore.RoomTimer.Restart();
+                DungeonStore.Active = true;
+                DungeonStore.KeyMask = 0;
+                DungeonStore.RoomCount = 0;
+                DungeonStore.FloorStartTime = DateTimeOffset.Now - TimeSpan.FromMilliseconds(1150); // Empirical
+                DungeonStore.Map.Clear();
+                DungeonStore.RoomTicks.Clear();
+                DungeonStore.RoomTimer.Restart();
                 Dispatcher.Invoke(overlayWindow.ClearRects);
-                Log($"Start of floor {++dungeonStore.FloorCounter}");
+                Log($"Start of floor {++DungeonStore.FloorCounter}");
             }
-            dungeonStore.LastActiveTime = DateTimeOffset.Now;
+            DungeonStore.LastActiveTime = DateTimeOffset.Now;
             var (map, roomCount) = reader.ReadMap();
-            bool changed = false;
-            if (roomCount > dungeonStore.RoomCount)
+            bool mapChanged = DungeonStore.Map.Merge(map);
+            ulong currentKeymask = reader.ReadKeybag();
+            ulong keymaskDelta = currentKeymask & ~DungeonStore.KeyMask;
+            // Since the 2026/7/6 update we can now track key locations in solos accurately.
+            if (keymaskDelta != 0 && DungeonStore.Map.PlayerCount == 1)
             {
-                changed = true;
-                dungeonStore.Map.Merge(map);
-                dungeonStore.RoomCount = roomCount;
-                int ticks = (int)Math.Round(dungeonStore.RoomTimer.Elapsed.TotalMilliseconds / 600);
-                dungeonStore.RoomTicks.Add((roomCount, ticks));
-                if (roomCount > 1)
-                    Log($"Room {roomCount} took {ticks} ticks ({ticks * 0.6:F1} s)");
-                dungeonStore.RoomTimer.Restart();
-            }
-            ulong newKeymask = reader.ReadKeybag();
-            ulong diff = newKeymask & ~dungeonStore.KeyMask;
-            if (diff != 0)
-            {
-                string keys = string.Empty;
-                int cnt = 0;
-                for (int i = 0; i < 64; ++i)
-                    if ((diff & (1UL << i)) != 0)
+                var loc = DungeonStore.Map.PlayerLocations[0]!.Value;
+                for (int k = 0; k < 64; ++k)
+                    if ((keymaskDelta & 1UL << k) != 0)
                     {
-                        ++cnt;
-                        keys += $"{Registry.GetKeyName(i)} ";
+                        Log($"Found key {Registry.GetKeyName(k)} in {loc.ToChessString()}");
+                        DungeonStore.Map.Rooms[loc.Row, loc.Col].Key = k;
                     }
-                string suffix = cnt == 1 ? string.Empty : "s";
             }
-            if (dungeonStore.KeyMask != newKeymask)
+            bool changed = mapChanged || keymaskDelta != 0;
+            if (roomCount > DungeonStore.RoomCount)
             {
-                changed = true;
-                dungeonStore.KeyMask |= newKeymask;
+                DungeonStore.RoomCount = roomCount;
+                int ticks = (int)Math.Round(DungeonStore.RoomTimer.Elapsed.TotalMilliseconds / 600);
+                if (roomCount > 1)
+                {
+                    DungeonStore.RoomTicks.Add((roomCount, ticks));
+                    Log($"Room {roomCount} took {ticks} ticks ({ticks * 0.6:F1} s)");
+                }
+                DungeonStore.RoomTimer.Restart();
             }
             if (changed)
+            {
+                DungeonStore.KeyMask |= currentKeymask;
                 _ = Dispatcher.InvokeAsync(overlayWindow.Update);
+            }
 
-            uint[] pixels = mapKeybagImage.Pixels.ToArray();
-            int stride = mapKeybagImage.Width * 4;
-            Dispatcher.Invoke(() => dungeonStore.MapImage.WritePixels(new(0, 0, MapKeybagReader.MapWidth, MapKeybagReader.MapHeight), pixels, stride, 0));
+            DungeonStore.UpdateMapImage(mapKeybagImage);
         }
 
         private void HistoryGrid_CopyingRowClipboardContent(object sender, DataGridRowClipboardEventArgs e)
@@ -307,19 +315,10 @@ namespace Dungeons2
                         e.ClipboardRowContent[i] = new DataGridClipboardCellContent(
                             e.Item,
                             cellContent.Column,
-                            dto.ToString("g"));
+                            dto.ToString("G"));
                     }
                 }
             }
-        }
-
-        [GeneratedRegex("[^0-9.]+")]
-        private static partial Regex NumericRegex();
-
-        private void TextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            var regex = NumericRegex();
-            e.Handled = regex.IsMatch(e.Text);
         }
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
@@ -327,10 +326,12 @@ namespace Dungeons2
             _ = Process.Start("explorer.exe", e.Uri.OriginalString);
             e.Handled = true;
         }
+
         private void InitializeGoogleSheets()
         {
             if (!File.Exists("google-credentials.json"))
             {
+                LogToSheet = false;
                 LogSheetsCheckBox.IsEnabled = false;
                 return;
             }
@@ -348,6 +349,7 @@ namespace Dungeons2
                 ApplicationName = "WPF Sheets Integration"
             });
         }
+
         private async Task AppendToGoogleSheets()
         {
             if (sheetsService is null || FloorHistory.Count == 0)
@@ -355,22 +357,18 @@ namespace Dungeons2
 
             string spreadsheetId = Settings.Default.SpreadsheetId;
             // 1. Read ONLY Column B to find how many rows are occupied
-            string readRange = "B3:B";
+            string readRange = "B2:B";
             var getRequest = sheetsService.Spreadsheets.Values.Get(spreadsheetId, readRange);
             var getResponse = await getRequest.ExecuteAsync();
 
             // Calculate the next empty row in Column B
-            int nextEmptyRow = (getResponse.Values?.Count ?? 0) + 3;
+            int nextEmptyRow = (getResponse.Values?.Count ?? 0) + 2;
 
             // 2. Use UPDATE to write exactly to that specific cell
             string exactUpdateRange = $"B{nextEmptyRow}";
 
-            var valueRange = new ValueRange
-            {
-                Values = [[FloorHistory[^1].Time]]
-            };
-
-            var updateRequest = sheetsService.Spreadsheets.Values.Update(valueRange, spreadsheetId, exactUpdateRange);
+            var updateRequest = sheetsService.Spreadsheets.Values.Update(
+                new ValueRange { Values = [[FloorHistory[^1].Time]] }, spreadsheetId, exactUpdateRange);
             updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
             try

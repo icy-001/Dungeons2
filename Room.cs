@@ -10,25 +10,71 @@
         N = 8
     }
 
-    public record struct Room(bool Opened = false, Directions Doors = Directions.None, Directions Parent = Directions.None, int Key = -1, int SkillDoor = -1, bool IsBase = false, bool IsBoss = false)
+    public record struct Room(
+        bool Opened = false,
+        Directions Doors = Directions.None,
+        Directions Parent = Directions.None,
+        int Lock = -1,
+        int Key = -1,
+        int SkillDoor = -1,
+        bool IsBase = false,
+        bool IsBoss = false)
     {
-        public Room() : this(Key: -1, SkillDoor: -1) { }
+        public Room() : this(Lock: -1, Key: -1, SkillDoor: -1) { }
 
-        public readonly bool IsDeadEnd => Doors == Parent;
+        public readonly bool IsDeadEnd => Doors != Directions.None && Doors == Parent && !IsBase && !IsBoss;
 
-        public void Merge(Room other)
+        /// <summary>
+        /// Merges this room with another and returns true if there was a change. Does not change any attributes if the room is in the Opened state. This is useful for collecting stats on keydoors and skilldoors.
+        /// </summary>
+        /// <param name="other">The other room.</param>
+        /// <returns>True if there was a change; otherwise, false.</returns>
+        public bool Merge(Room other)
         {
             if (Opened)
-                return;
-            Opened = other.Opened;
-            Doors = other.Doors;
-            Parent = other.Parent;
-            if (Key == -1)
+                return false;
+            bool changed = false;
+            if (Opened != other.Opened)
+            {
+                Opened = other.Opened;
+                changed = true;
+            }
+            if (Doors != other.Doors)
+            {
+                Doors = other.Doors;
+                changed = true;
+            }
+            if (Parent != other.Parent)
+            {
+                Parent = other.Parent;
+                changed = true;
+            }
+            if (Lock == -1 && Lock != other.Lock)
+            {
+                Lock = other.Lock;
+                changed = true;
+            }
+            if (Key == -1 && Key != other.Key)
+            {
                 Key = other.Key;
-            if (SkillDoor == -1)
+                changed = true;
+            }
+            if (SkillDoor == -1 && SkillDoor != other.SkillDoor)
+            {
                 SkillDoor = other.SkillDoor;
-            IsBase |= other.IsBase;
-            IsBoss |= other.IsBoss;
+                changed = true;
+            }
+            if (IsBase != other.IsBase)
+            {
+                IsBase |= other.IsBase;
+                changed = true;
+            }
+            if (IsBoss != other.IsBoss)
+            {
+                IsBoss |= other.IsBoss;
+                changed = true;
+            }
+            return changed;
         }
     }
 }

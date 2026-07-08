@@ -10,22 +10,13 @@ namespace Dungeons2
         public readonly int Height = height;
         public uint this[int x, int y] => Pixels[GetPixelIndex(x, y)];
 
-        public Color GetColor(int x, int y)
-        {
-            return Color.FromArgb((int)this[x, y]);
-        }
+        public Color GetColor(int x, int y) => Color.FromArgb((int)this[x, y]);
 
-        public int GetPixelIndex(int x, int y)
-        {
-            return y * Width + x;
-        }
+        public int GetPixelIndex(int x, int y) => y * Width + x;
 
         public double MatchDistance(RawImageView template, int start_x, int start_y, double threshold = double.MaxValue)
         {
-            static int sq(int x)
-            {
-                return x * x;
-            }
+            static int sq(int x) => x * x;
 
             double totalThreshold = threshold * template.Width * template.Height;
 
@@ -105,9 +96,6 @@ namespace Dungeons2
             return true;
         }
 
-        public static RawImageView FromFrame(FrameAccess frame)
-        {
-            return new(frame.Map.AsSpan<uint>((int)frame.Map.DepthPitch / 4), (int)(frame.Map.RowPitch / 4), frame.Height);
-        }
+        public static RawImageView FromFrame(FrameAccess frame) => new(frame.Map.AsSpan<uint>((int)frame.Map.DepthPitch / 4), (int)(frame.Map.RowPitch / 4), frame.Height);
     }
 }

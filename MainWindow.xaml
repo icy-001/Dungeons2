@@ -5,15 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Dungeons2"
         mc:Ignorable="d"
-        Title="Dungeons" Height="600" Width="800">
+        Title="Dungeons"  Width="1000" Height="600">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="300"/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <StackPanel HorizontalAlignment="Center">
-            <WrapPanel Grid.Row="0" HorizontalAlignment="Center" Margin="10">
+        <StackPanel Grid.ColumnSpan="2" Margin="10,10,10,5">
+            <WrapPanel HorizontalAlignment="Center">
                 <ComboBox VerticalAlignment="Center" x:Name="RSWindowComboBox" Width="255" ItemsSource="{Binding RSWindows}" SelectedItem="{Binding SelectedWindow}"/>
                 <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"><Hyperlink NavigateUri="Maps" RequestNavigate="Hyperlink_RequestNavigate">Maps</Hyperlink></TextBlock>
                 <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"><Hyperlink NavigateUri="Winterfaces" RequestNavigate="Hyperlink_RequestNavigate">Winterfaces</Hyperlink></TextBlock>
@@ -33,7 +37,7 @@
                         Width="SizeToHeader" />
 
                 <DataGridTextColumn Header="Timestamp" 
-                        Binding="{Binding Timestamp, StringFormat=\{0:g\}}" 
+                        Binding="{Binding Timestamp, StringFormat=\{0:G\}}" 
                         Width="120" />
 
                 <DataGridTextColumn Header="Teammates" 
@@ -93,6 +97,7 @@
                         Width="*" />
             </DataGrid.Columns>
         </DataGrid>
-        <TextBox Grid.Row="2" x:Name="LogTextBox" Margin="10,5,10,10" TextWrapping="Wrap" IsReadOnly="True" FontFamily="Cascadia Code" VerticalScrollBarVisibility="Auto"/>
+        <TextBox Grid.Row="2" x:Name="LogTextBox" Margin="10,5,10,10" TextWrapping="Wrap" IsReadOnly="True" FontFamily="Cascadia Code" VerticalScrollBarVisibility="Auto" />
+        <Image x:Name="AnnotatedMapImage" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Width="280" Height="280" />
     </Grid>
 </Window>

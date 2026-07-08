@@ -14,14 +14,14 @@ namespace Dungeons2
     /// </summary>
     public partial class OverlayWindow : Window
     {
+        private const double HighlightOpacity = 0.1;
         private IntPtr hwnd;
         private readonly DispatcherTimer trackerTimer;
-        private readonly DungeonStore dungeonStore;
-        private readonly Rectangle?[] activeRects = new Rectangle?[64];
+        private readonly Rectangle?[,] activeRects = new Rectangle?[8, 8];
         private ulong currentKeyMask;
         private readonly DoubleAnimation opacityAnimation = new()
         {
-            From = 0.05,
+            From = HighlightOpacity,
             To = 0.5,
             Duration = TimeSpan.FromMilliseconds(300),
             AutoReverse = true,
@@ -29,16 +29,15 @@ namespace Dungeons2
             EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
         };
 
-        public OverlayWindow(DungeonStore store)
+        public OverlayWindow()
         {
             InitializeComponent();
-            dungeonStore = store;
 
             trackerTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
             trackerTimer.Tick += (sender, args) =>
             {
                 TrackingLoop();
-                UpdateRpm();
+                UpdateText();
             };
         }
 
@@ -54,58 +53,58 @@ namespace Dungeons2
             }
         }
 
+        static DungeonStore DungeonStore => DungeonStore.Instance;
+
         /// <summary>
         /// Updates the overlay window. Must be called from UI thread.
         /// </summary>
         public void Update()
         {
+            //string keys = string.Empty;
+            //for (int k = 0; k < 64; ++k)
+            //    if ((DungeonStore.KeyMask & (1UL << k)) != 0) keys += Registry.GetKeyName(k) + " ";
+            //Debug.WriteLine("current keys = " + keys);
             for (int i = 0; i < 8; ++i)
                 for (int j = 0; j < 8; ++j)
                 {
-                    int key = dungeonStore.Map.Rooms[i, j].Key;
-                    if (key == -1)
-                        continue;
-                    bool unlockable = !dungeonStore.Map.Rooms[i, j].Opened && (dungeonStore.KeyMask & (1UL << key)) != 0;
-                    if (unlockable && activeRects[key] is null)
+                    int key = DungeonStore.Map.Rooms[i, j].Lock;
+                    bool unlockable = key >= 0 && key < 64 && (DungeonStore.KeyMask & (1UL << key)) != 0 && !DungeonStore.Map.Rooms[i, j].Opened;
+                    if (unlockable && activeRects[i, j] is null)
                     {
-                        var fill = new SolidColorBrush(Colors.White)
-                        {
-                            Opacity = 0.05
-                        };
                         var rect = new Rectangle
                         {
                             Width = 26,
                             Height = 26,
-                            Fill = fill,
+                            Fill = new SolidColorBrush(Colors.White) { Opacity = HighlightOpacity },
                             Stroke = Brushes.White
                         };
-
                         Canvas.SetLeft(rect, 14 + 32 * j);
                         Canvas.SetTop(rect, 15 + 32 * i);
+                        activeRects[i, j] = rect;
                         _ = HighlightCanvas.Children.Add(rect);
-                        activeRects[key] = rect;
 
+                        // Only flash if update is due to key found.
                         if ((currentKeyMask & (1UL << key)) == 0)
-                            // Only flash if update is due to key found.
-                            fill.BeginAnimation(Brush.OpacityProperty, opacityAnimation);
+                            rect.Fill.BeginAnimation(Brush.OpacityProperty, opacityAnimation);
                     }
-                    if (!unlockable && activeRects[key] is not null)
+                    else if (!unlockable && activeRects[i, j] is not null)
                     {
-                        HighlightCanvas.Children.Remove(activeRects[key]);
-                        activeRects[key] = null;
+                        HighlightCanvas.Children.Remove(activeRects[i, j]);
+                        activeRects[i, j] = null;
                     }
                 }
-            currentKeyMask = dungeonStore.KeyMask;
+            currentKeyMask = DungeonStore.KeyMask;
         }
 
         public void ClearRects()
         {
-            for (int k = 0; k < 64; ++k)
-                if (activeRects[k] is not null)
-                {
-                    HighlightCanvas.Children.Remove(activeRects[k]);
-                    activeRects[k] = null;
-                }
+            for (int i = 0; i < 8; ++i)
+                for (int j = 0; j < 8; ++j)
+                    if (activeRects[i, j] is not null)
+                    {
+                        HighlightCanvas.Children.Remove(activeRects[i, j]);
+                        activeRects[i, j] = null;
+                    }
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -132,7 +131,7 @@ namespace Dungeons2
         /// </summary>
         private void TrackingLoop()
         {
-            if (RsHwnd == IntPtr.Zero || !dungeonStore.InFloor)
+            if (RsHwnd == IntPtr.Zero || !DungeonStore.Active)
             {
                 if (Visibility != Visibility.Hidden)
                     Visibility = Visibility.Hidden;
@@ -164,37 +163,42 @@ namespace Dungeons2
                 User32.SWP_NOSIZE | User32.SWP_NOACTIVATE | User32.SWP_NOZORDER);
         }
 
-        private void UpdateRpm()
+        private void UpdateText()
         {
-            if (!dungeonStore.InFloor)
+            if (!DungeonStore.Active)
             {
                 StatusBorder.Visibility = Visibility.Hidden;
                 return;
             }
             StatusBorder.Visibility = Visibility.Visible;
-            int c = dungeonStore.RoomCount;
-            int d = dungeonStore.DeadEndCount();
-            var elapsed = DateTimeOffset.Now - dungeonStore.FloorStartTime;
+            int c = DungeonStore.RoomCount;
+            int d = DungeonStore.Map.DeadEndCount();
+            var elapsed = DateTimeOffset.Now - DungeonStore.FloorStartTime;
             if (elapsed.TotalMilliseconds < 0)
                 return;
             double rpm = CalculateRpm(c, elapsed.TotalMinutes);
-            double targetRpm = dungeonStore.Map.PlayerCount > 0 && dungeonStore.Map.PlayerCount <= Settings.Default.TargetRpms.Length
-                ? Settings.Default.TargetRpms[dungeonStore.Map.PlayerCount - 1]
+            double targetRpm = DungeonStore.Map.PlayerCount > 0 && DungeonStore.Map.PlayerCount <= Settings.Default.TargetRpms.Length
+                ? Settings.Default.TargetRpms[DungeonStore.Map.PlayerCount - 1]
                 : 0;
             double ratio = rpm / targetRpm;
-            int ticks = (int)Math.Ceiling((double)dungeonStore.RoomTimer.ElapsedMilliseconds / 600);
-            var (skillCount, skillTicks) = dungeonStore.Map.SkillDoorStats();
-            StatusText.Text = $"Rooms: {c,-2}  •  Dead ends: {d,-2}  •  RPM: {rpm:F1}\nSkill: {skillCount} | {skillTicks}  •  PP: {dungeonStore.Map.PossiblePuzzleCount()}  •  Ticks since last room: {ticks}";
-            StatusBorder.Background = RpmRatioToBrush(ratio);
+            int ticks = (int)Math.Ceiling((double)DungeonStore.RoomTimer.ElapsedMilliseconds / 600);
+            RoomsRun.Text = $"{c,2}";
+            DERun.Text = $"{d,2}";
+            DELabel.Text = d == 1 ? "dead end" : "dead ends";
+            TicksRun.Text = $"{ticks,2}t";
+            TicksRun.Foreground = ticks < 10 ? Brushes.Lime : ticks < 20 ? Brushes.Yellow : Brushes.Red;
+            RpmRun.Text = $"{rpm,2:F1}";
+            RpmRun.Foreground = RpmRatioToBrush(ratio);
+            HistoryRun.Text = string.Join(" • ", from x in DungeonStore.RoomTicks.TakeLast(4) select x.Item2.ToString().PadLeft(2));
         }
 
         static SolidColorBrush RpmRatioToBrush(double ratio)
         {
             if (ratio == 0)
-                return Brushes.Black;
+                return Brushes.White;
             double t = Math.Clamp((ratio - 0.8) / (1.2 - 0.8), 0, 1);
             double hue = t * 120.0;
-            return new SolidColorBrush(HslToRgb(hue, 0.6, 0.25));
+            return new SolidColorBrush(HslToRgb(hue, 0.6, 0.6));
         }
 
         static Color HslToRgb(double h, double s, double l)
@@ -227,7 +231,7 @@ namespace Dungeons2
 
         static double CalculateRpm(int roomCount, double elapsedMinutes)
         {
-            double baseMinutes = 2.0 / 60;
+            const double baseMinutes = 2.0 / 60;
             return elapsedMinutes < baseMinutes ? 0 : (roomCount - 1) / (elapsedMinutes - baseMinutes);
         }
     }

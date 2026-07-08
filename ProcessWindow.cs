@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Drawing;
 
 namespace Dungeons2
@@ -10,20 +9,9 @@ namespace Dungeons2
         public bool HasExited => Process?.HasExited ?? false;
         public IntPtr Handle => Process?.MainWindowHandle ?? IntPtr.Zero;
         public string Title => Process?.MainWindowTitle ?? "Entire screen";
-        public Size Size
-        {
-            get
-            {
-                if (Interop.User32.GetClientRect(Handle, out var rect))
-                    return new Size(rect.Right - rect.Left, rect.Bottom - rect.Top);
-                return Size.Empty;
-            }
-        }
+        public Size Size => Interop.User32.GetClientRect(Handle, out var rect) ? new Size(rect.Right - rect.Left, rect.Bottom - rect.Top) : Size.Empty;
 
-        public bool Equals(ProcessWindow? other)
-        {
-            return Process?.Id == other?.Process?.Id;
-        }
+        public bool Equals(ProcessWindow? other) => Process?.Id == other?.Process?.Id;
 
         public override string ToString()
         {
@@ -31,24 +19,12 @@ namespace Dungeons2
             return Process == null ? Title : $"[{size.Width}x{size.Height}] {Title}";
         }
 
-        public override bool Equals(object? obj)
-        {
-            return obj is ProcessWindow x && Equals(x);
-        }
+        public override bool Equals(object? obj) => obj is ProcessWindow x && Equals(x);
 
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
+        public override int GetHashCode() => base.GetHashCode();
 
-        public static bool operator ==(ProcessWindow? left, ProcessWindow? right)
-        {
-            return left?.Equals(right) ?? right is null;
-        }
+        public static bool operator ==(ProcessWindow? left, ProcessWindow? right) => left?.Equals(right) ?? (right is null);
 
-        public static bool operator !=(ProcessWindow? left, ProcessWindow? right)
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(ProcessWindow? left, ProcessWindow? right) => !(left == right);
     }
 }
