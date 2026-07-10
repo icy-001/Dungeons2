@@ -5,32 +5,41 @@ using Windows.Graphics;
 
 namespace Dungeons2
 {
-    public static class Registry
+    public class Registry
     {
+        public static Registry Instance { get; } = new();
+
         public const int KeybagKeyWidth = 18, KeybagKeyHeight = 16;
         public const int MapKeyWidth = 24, MapKeyHeight = 24;
         public const int HighlightedKeyWidth = 29, HighlightedKeyHeight = 29;
         public const int KeybagPadding = 2;
-        public static readonly string[] Colors = ["o", "s", "y", "gr", "b", "p", "c", "go"];
-        public static readonly string[] Shapes = ["t", "d", "r", "p", "co", "cr", "w", "s"];
 
-        public static readonly uint[][] MapKeys = new uint[64][], KeybagKeys = new uint[64][], HighlightedKeys = new uint[64][];
-        public static readonly BitmapSource[] RoomBitmaps = new BitmapSource[16];
-        public static readonly uint[][] RoomSignatures = new uint[16][];
+        public readonly string[] Colors = ["o", "s", "y", "gr", "b", "p", "c", "go"];
+        public readonly string[] Shapes = ["t", "d", "r", "p", "co", "cr", "w", "s"];
+
+        public readonly uint[][] MapKeys = new uint[64][];
+        public readonly uint[][] KeybagKeys = new uint[64][];
+        public readonly uint[][] HighlightedKeys = new uint[64][];
+        public readonly BitmapSource[] RoomBitmaps = new BitmapSource[16];
+        public readonly uint[][] RoomSignatures = new uint[16][];
+
         public const int MapMarkerWidth = 15, MapMarkerHeight = 15;
-        public static RawImage MapMarker { get; private set; } = new();
-        public const int WinterfaceMarkerWidth = 56, WinterfaceMarkerHeight = 10;
-        public static RawImage WinterfaceMarker { get; private set; } = new();
-        public static RawImage WinterfaceReady { get; private set; } = new();
+        public RawImage MapMarker { get; private set; } = new();
 
-        public static readonly uint[][] PlayerDots = new uint[5][];
+        public const int WinterfaceMarkerWidth = 56, WinterfaceMarkerHeight = 10;
+        public RawImage WinterfaceMarker { get; private set; } = new();
+        public RawImage WinterfaceReady { get; private set; } = new();
+
+        public readonly uint[][] PlayerDots = new uint[5][];
         public const int PlayerDotWidth = 9, PlayerDotHeight = 9;
-        public static readonly PointInt32[] PlayerDotOffsets =
+        public readonly PointInt32[] PlayerDotOffsets =
         [
             new(7, 2), new(21, 2), new(14, 9), new(7, 16), new(21, 16)
         ];
 
-        private static readonly (string, int)[] skillDoorData = [
+        public RawImage HudMarker { get; private set; } = new();
+
+        private readonly (string, int)[] skillDoorData = [
             ("Crafting", 2),
             ("Runecrafting", 4),
             ("Smithing", 4),
@@ -51,55 +60,70 @@ namespace Dungeons2
             ("Agility", 7),
         ];
 
-        public static readonly SkillDoor[] SkillDoors = new SkillDoor[skillDoorData.Length];
+        public readonly SkillDoor[] SkillDoors;
 
-        static bool isInitialized;
+        private bool _isInitialized;
+        private readonly Lock _initLock = new();
 
-        public static void Initialize()
+        private Registry()
         {
-            if (isInitialized)
-                return;
-
-            uint[][] keys = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.keys.png", 8, 8, 36, 32);
-            Debug.Assert(keys.Length == 64);
-
-            for (int i = 0; i < 64; ++i)
-            {
-                KeybagKeys[i] = ImageScaler.BilinearScale(keys[i], 36, 32, KeybagKeyWidth, KeybagKeyHeight);
-                MapKeys[i] = ImageScaler.BilinearScale(keys[i], 36, 32, MapKeyWidth, MapKeyHeight, 1);
-            }
-
-            uint[][] rooms = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.rooms.png", 1, 16, 32, 32);
-            for (int i = 0; i < 16; ++i)
-            {
-                RoomBitmaps[i] = BitmapSource.Create(32, 32, 96, 96, PixelFormats.Bgra32, null, rooms[i], 32 * 4);
-                RoomSignatures[i] = ComputeSignature(new(rooms[i], 32, 32));
-            }
-
-            MapMarker = SpriteLoader.LoadSprite("Dungeons2.Images.map_marker.png");
-            WinterfaceMarker = SpriteLoader.LoadSprite("Dungeons2.Images.winterface_marker.png");
-            WinterfaceReady = SpriteLoader.LoadSprite("Dungeons2.Images.winterface_ready.png");
-
-            SpriteLoader.LoadSpriteSheet("Dungeons2.Images.player_dots.png", 1, 5, PlayerDotWidth, PlayerDotHeight).CopyTo(PlayerDots, 0);
-            SpriteLoader.LoadSpriteSheet("Dungeons2.Images.highlighted_keys.png", 8, 8, HighlightedKeyWidth, HighlightedKeyHeight).CopyTo(HighlightedKeys, 0);
-            uint[][] skillIcons = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.skills.png", 1, 18, HighlightedKeyWidth, HighlightedKeyHeight);
-            for (int i = 0; i < skillDoorData.Length; ++i)
-                SkillDoors[i] = new(skillDoorData[i].Item1, skillDoorData[i].Item2, new(skillIcons[i], HighlightedKeyWidth, HighlightedKeyHeight));
-
-            isInitialized = true;
+            SkillDoors = new SkillDoor[skillDoorData.Length];
         }
 
-        public static string GetKeyName(int index) => index < 0 ? "none" : Colors[index / 8] + Shapes[index % 8];
+        public void Initialize()
+        {
+            lock (_initLock)
+            {
+                if (_isInitialized) return;
 
-        public static RawImageView GetKeybagKey(int index) => new(KeybagKeys[index], KeybagKeyWidth, KeybagKeyHeight);
+                uint[][] keys = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.keys.png", 8, 8, 36, 32);
+                Debug.Assert(keys.Length == 64);
 
-        public static RawImageView GetMapKey(int index) => new(MapKeys[index], MapKeyWidth, MapKeyHeight);
+                for (int i = 0; i < 64; ++i)
+                {
+                    KeybagKeys[i] = ImageScaler.BilinearScale(keys[i], 36, 32, KeybagKeyWidth, KeybagKeyHeight);
+                    MapKeys[i] = ImageScaler.BilinearScale(keys[i], 36, 32, MapKeyWidth, MapKeyHeight, 1);
+                }
 
-        public static RawImageView GetHighlightedMapKey(int index) => new(HighlightedKeys[index], HighlightedKeyWidth, HighlightedKeyHeight);
+                uint[][] rooms = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.rooms.png", 1, 16, 32, 32);
+                for (int i = 0; i < 16; ++i)
+                {
+                    var bitmap = BitmapSource.Create(32, 32, 96, 96, PixelFormats.Bgra32, null, rooms[i], 32 * 4);
+                    bitmap.Freeze();
+                    RoomBitmaps[i] = bitmap;
 
-        public static RawImage GetSkillIcon(int index) => SkillDoors[index].Image;
+                    RoomSignatures[i] = ComputeSignature(new(rooms[i], 32, 32));
+                }
 
-        public static RawImageView GetPlayerDot(int index) => new(PlayerDots[index], PlayerDotWidth, PlayerDotHeight);
+                MapMarker = SpriteLoader.LoadSprite("Dungeons2.Images.map_marker.png");
+                WinterfaceMarker = SpriteLoader.LoadSprite("Dungeons2.Images.winterface_marker.png");
+                WinterfaceReady = SpriteLoader.LoadSprite("Dungeons2.Images.winterface_ready.png");
+                HudMarker = SpriteLoader.LoadSprite("Dungeons2.Images.hud_marker.png");
+
+                SpriteLoader.LoadSpriteSheet("Dungeons2.Images.player_dots.png", 1, 5, PlayerDotWidth, PlayerDotHeight).CopyTo(PlayerDots, 0);
+                SpriteLoader.LoadSpriteSheet("Dungeons2.Images.highlighted_keys.png", 8, 8, HighlightedKeyWidth, HighlightedKeyHeight).CopyTo(HighlightedKeys, 0);
+
+                uint[][] skillIcons = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.skills.png", 1, 18, HighlightedKeyWidth, HighlightedKeyHeight);
+                for (int i = 0; i < skillDoorData.Length; ++i)
+                {
+                    SkillDoors[i] = new(skillDoorData[i].Item1, skillDoorData[i].Item2, new(skillIcons[i], HighlightedKeyWidth, HighlightedKeyHeight));
+                }
+
+                _isInitialized = true;
+            }
+        }
+
+        public string GetKeyName(int index) => index < 0 ? "none" : Colors[index / 8] + Shapes[index % 8];
+
+        public RawImageView GetKeybagKey(int index) => new(KeybagKeys[index], KeybagKeyWidth, KeybagKeyHeight);
+
+        public RawImageView GetMapKey(int index) => new(MapKeys[index], MapKeyWidth, MapKeyHeight);
+
+        public RawImageView GetHighlightedMapKey(int index) => new(HighlightedKeys[index], HighlightedKeyWidth, HighlightedKeyHeight);
+
+        public RawImage GetSkillIcon(int index) => SkillDoors[index].Image;
+
+        public RawImageView GetPlayerDot(int index) => new(PlayerDots[index], PlayerDotWidth, PlayerDotHeight);
 
         public static uint[] ComputeSignature(RawImageView image, int offX = 0, int offY = 0)
         {

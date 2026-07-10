@@ -1,0 +1,16 @@
+﻿<UserControl x:Class="Dungeons2.Views.LogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:services="clr-namespace:Dungeons2.Services">
+    <Grid Background="#121212">
+        <TextBox x:Name="LogTextBox"
+                 IsReadOnly="True"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 Background="#1E1E1E"
+                 Foreground="#E0E0E0"
+                 BorderThickness="0"
+                 FontFamily="Cascadia Code"
+                 Margin="10" Padding="2"/>
+    </Grid>
+</UserControl>

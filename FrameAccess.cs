@@ -14,8 +14,9 @@ namespace Dungeons2
             if (tex is null)
                 return;
             lock (frameLock)
-                ctx.Unmap(tex, 0);
-            if (ownTexture)
+                if (ctx.NativePointer != IntPtr.Zero && tex.NativePointer != IntPtr.Zero)
+                    ctx.Unmap(tex, 0);
+            if (ownTexture && tex.NativePointer != IntPtr.Zero)
                 tex.Dispose();
         }
     }

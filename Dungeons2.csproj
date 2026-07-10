@@ -8,9 +8,14 @@
     <UseWPF>true</UseWPF>
     <SupportedOSPlatformVersion>10.0.26100.0</SupportedOSPlatformVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <VersionPrefix>2.0.0</VersionPrefix>
+    <VersionPrefix>0.1.0</VersionPrefix>
     <ApplicationIcon>Images\ring-of-kinship.ico</ApplicationIcon>
+    <EnableMsixTooling>true</EnableMsixTooling>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="Images\hud_marker.png" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="Images\highlighted_keys.png" />
@@ -58,6 +63,7 @@
     <EmbeddedResource Include="Fonts\Small\minus.png" />
     <EmbeddedResource Include="Fonts\Small\plus.png" />
     <EmbeddedResource Include="Images\highlighted_keys.png" />
+    <EmbeddedResource Include="Images\hud_marker.png" />
     <EmbeddedResource Include="Images\keys.png" />
     <EmbeddedResource Include="Images\rooms.png" />
     <EmbeddedResource Include="Images\map_marker.png" />

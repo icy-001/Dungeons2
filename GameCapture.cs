@@ -15,8 +15,10 @@ namespace Dungeons2
         IntPtr GetInterface(in Guid iid);
     }
 
-    public class GameCapture
+    public partial class GameCapture : IDisposable
     {
+        public static GameCapture Instance { get; } = new();
+
         private readonly ID3D11Device device;
         private readonly ID3D11DeviceContext context;
         private readonly IDirect3DDevice winrtDevice;
@@ -25,11 +27,11 @@ namespace Dungeons2
         private Direct3D11CaptureFramePool? framePool;
         private readonly Lock frameLock = new();
         private Direct3D11CaptureFrame? currentFrame;
-
         private readonly ID3D11Texture2D stagingTexture;
         private readonly ID3D11Texture2D winterfaceTexture;
+        private bool disposedValue;
 
-        public GameCapture()
+        private GameCapture()
         {
             _ = D3D11.D3D11CreateDevice(null, Vortice.Direct3D.DriverType.Hardware, DeviceCreationFlags.BgraSupport, [], out device, out context);
 
@@ -40,8 +42,8 @@ namespace Dungeons2
 
             stagingTexture = device.CreateTexture2D(new()
             {
-                Width = MapKeybagReader.MapWidth,
-                Height = MapKeybagReader.MapHeight + 102,
+                Width = MapHudReader.MapWidth,
+                Height = MapHudReader.MapHeight + 102,
                 MipLevels = 1,
                 ArraySize = 1,
                 Format = Format.B8G8R8A8_UNorm,
@@ -70,7 +72,7 @@ namespace Dungeons2
         public void SetTarget(WindowId windowId)
         {
             var item = GraphicsCaptureItem.TryCreateFromWindowId(windowId);
-            if (item == null) return;
+            if (item is null) return;
 
             lock (frameLock)
             {
@@ -116,7 +118,7 @@ namespace Dungeons2
         {
             lock (frameLock)
             {
-                if (currentFrame == null)
+                if (currentFrame is null)
                     return new();
 
                 using ID3D11Texture2D1 frameTexture = new(currentFrame.Surface.As<IDirect3DDxgiInterfaceAccess>().GetInterface(typeof(ID3D11Texture2D1).GUID));
@@ -149,8 +151,12 @@ namespace Dungeons2
 
                 using ID3D11Texture2D1 frameTexture = new(currentFrame.Surface.As<IDirect3DDxgiInterfaceAccess>().GetInterface(typeof(ID3D11Texture2D1).GUID));
 
-                context.CopySubresourceRegion(stagingTexture, 0, 0, 0, 0, frameTexture, 0, new(Settings.Default.MapX, Settings.Default.MapY, 0, Settings.Default.MapX + MapKeybagReader.MapWidth, Settings.Default.MapY + MapKeybagReader.MapHeight, 1));
-                context.CopySubresourceRegion(stagingTexture, 0, 0, MapKeybagReader.MapHeight, 0, frameTexture, 0, new(Settings.Default.KeybagX, Settings.Default.KeybagY, 0, Settings.Default.KeybagX + 112, Settings.Default.KeybagY + 102, 1));
+                context.CopySubresourceRegion(stagingTexture, 0, 0, 0, 0, frameTexture, 0,
+                    new(offset: new(Settings.Instance.MapX, Settings.Instance.MapY, 0),
+                        extent: new(MapHudReader.MapWidth, MapHudReader.MapHeight, 1)));
+                context.CopySubresourceRegion(stagingTexture, 0, 0, MapHudReader.MapHeight, 0, frameTexture, 0,
+                    new(offset: new(Settings.Instance.HudX, Settings.Instance.HudY, 0),
+                        extent: new(117, 154, 1)));
 
                 var map = context.Map(stagingTexture, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
                 return new(map, context, stagingTexture, frameLock, false);
@@ -161,16 +167,51 @@ namespace Dungeons2
         {
             lock (frameLock)
             {
-                if (currentFrame == null)
+                if (currentFrame is null)
                     return new();
 
                 using ID3D11Texture2D1 frameTexture = new(currentFrame.Surface.As<IDirect3DDxgiInterfaceAccess>().GetInterface(typeof(ID3D11Texture2D1).GUID));
 
-                context.CopySubresourceRegion(winterfaceTexture, 0, 0, 0, 0, frameTexture, 0, new(Settings.Default.WinterfaceX, Settings.Default.WinterfaceY, 0, Settings.Default.WinterfaceX + WinterfaceReader.WinterfaceWidth, Settings.Default.WinterfaceY + WinterfaceReader.WinterfaceHeight, 1));
+                context.CopySubresourceRegion(winterfaceTexture, 0, 0, 0, 0, frameTexture, 0,
+                    new(offset: new(Settings.Instance.WinterfaceX, Settings.Instance.WinterfaceY, 0),
+                        extent: new(WinterfaceReader.WinterfaceWidth, WinterfaceReader.WinterfaceHeight, 1)));
 
                 var map = context.Map(winterfaceTexture, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
                 return new(map, context, winterfaceTexture, frameLock, false);
             }
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposedValue) return;
+
+            lock (frameLock)
+            {
+                session?.Dispose();
+                framePool?.Dispose();
+                currentFrame?.Dispose();
+                stagingTexture?.Dispose();
+                winterfaceTexture?.Dispose();
+
+                if (winrtDevice is IDisposable disposableWinrtDevice)
+                    disposableWinrtDevice.Dispose();
+
+                context?.Dispose();
+                device?.Dispose();
+            }
+
+            disposedValue = true;
+        }
+
+        ~GameCapture()
+        {
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

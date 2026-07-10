@@ -7,6 +7,8 @@ namespace Dungeons2
 {
     public class AnnotatedMapRenderer
     {
+        static Registry Registry => Registry.Instance;
+
         public static RenderTargetBitmap DrawMap(int mapWidth, int mapHeight, Map map)
         {
             int offX = (mapWidth - 256) / 2, offY = (mapHeight - 256) / 2;

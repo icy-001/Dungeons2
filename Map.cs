@@ -1,21 +1,17 @@
 ﻿namespace Dungeons2
 {
-    public readonly record struct Coord(int Row, int Col)
-    {
-        public static readonly Coord Nothing = new(-1, -1);
-        public string ToChessString() => $"{(char)('a' + Col)}{8 - Row}";
-    }
-
     public class Map
     {
-        static readonly Directions[] SingleDirections = [Directions.W, Directions.E, Directions.S, Directions.N];
+        public Map() { Clear(); }
 
         public Room[,] Rooms { get; } = new Room[8, 8];
         public Coord Base { get; set; } = Coord.Nothing;
         public Coord Boss { get; set; } = Coord.Nothing;
         public Coord?[] PlayerLocations { get; } = new Coord?[5];
         public int PlayerCount => PlayerLocations.Count(p => p.HasValue);
-        public Map() { Clear(); }
+
+        static readonly Directions[] SingleDirections = [Directions.W, Directions.E, Directions.S, Directions.N];
+        static Registry Registry => Registry.Instance;
 
         public void Clear()
         {

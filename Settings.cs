@@ -5,10 +5,12 @@ namespace Dungeons2
 {
     public class Settings
     {
+        public static Settings Instance { get; set; } = SettingsManager.Load();
+
         public int MapX { get; set; }
         public int MapY { get; set; }
-        public int KeybagX { get; set; } = 290;
-        public int KeybagY { get; set; } = 73;
+        public int HudX { get; set; } = 285;
+        public int HudY { get; set; } = 21;
         public int WinterfaceX { get; set; } = 704;
         public int WinterfaceY { get; set; } = 373;
         public string MapSaveLocation { get; set; } = "Maps";
@@ -16,8 +18,8 @@ namespace Dungeons2
         public double[] TargetRpms { get; set; } = [8.4, 13, 16, 18, 20];
         public bool LogToSheet { get; set; } = false;
         public string SpreadsheetId { get; set; } = string.Empty;
-
-        public static Settings Default { get; set; } = new();
+        public string SpreadsheetColumn { get; set; } = "B";
+        public int SpreadsheetStartRow { get; set; } = 1;
 
         public void Save() => SettingsManager.Save(this);
     }
@@ -43,7 +45,7 @@ namespace Dungeons2
         public static Settings Load()
         {
             if (!File.Exists(SettingsFile))
-                return new Settings();
+                return new();
 
             string json = File.ReadAllText(SettingsFile);
             return JsonSerializer.Deserialize<Settings>(json) ?? new();

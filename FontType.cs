@@ -9,7 +9,7 @@
         public List<RawImage> NumberImageList { get; set; } = [];
         public int Height => NumberImageList[0].Height;
 
-        public static void InitializeFonts()
+        static FontType()
         {
             BaseFont.NumberImageList = [.. GetNumberList("Base")];
             SmallFont.NumberImageList = [.. GetNumberList("Small"),

@@ -16,7 +16,7 @@ namespace Dungeons2
         public override string ToString()
         {
             var size = Size;
-            return Process == null ? Title : $"[{size.Width}x{size.Height}] {Title}";
+            return Process is null ? Title : $"[{size.Width}x{size.Height}] {Title}";
         }
 
         public override bool Equals(object? obj) => obj is ProcessWindow x && Equals(x);

@@ -10,6 +10,8 @@ namespace Dungeons2
 
         public RawImageView Image { get; } = img;
 
+        static Registry Registry => Registry.Instance;
+
         public readonly Color GetColor(int x, int y) => Image.GetColor(x, y);
 
         public bool HasWinterface() => Image.IsExactMatch(Registry.WinterfaceMarker, 0, 0) && Image.IsExactMatch(Registry.WinterfaceReady, 334, 299);
@@ -91,17 +93,18 @@ namespace Dungeons2
         {
             string floorSizeMod = ReadField(Field.SizeMod);
             string size = floorSizeMod == "+500" ? "Large" : floorSizeMod == "+250" ? "Medium" : "Small";
-            int bonusField = ParseOrDefault(ReadField(Field.BonusMod));
-            return new FloorData(
-                FloorNumber: ParseOrDefault(ReadField(Field.Floor)),
-                Size: size,
-                Time: ReadField(Field.Time),
-                Bonus: size == "Large" ? (double)bonusField / 360 : GetBonus(),
-                MobsKilledMod: ParseOrDefault(ReadField(Field.LevelMod)),
-                Boost: ParseOrDefault(ReadField(Field.FloorXPBoost)),
-                TotalMod: ParseOrDefault(ReadField(Field.TotalMod)),
-                TotalXP: ParseOrDefault(ReadField(Field.FinalXP))
-            );
+            int bonusField = ParseInt(ReadField(Field.BonusMod));
+            return new FloorData
+            {
+                FloorNumber = ParseInt(ReadField(Field.Floor)),
+                Size = size,
+                Bonus = size == "Large" ? (double)bonusField / 360 : GetBonus(),
+                MobsKilledMod = ParseInt(ReadField(Field.LevelMod)),
+                Boost = ParseInt(ReadField(Field.FloorXPBoost)),
+                TotalMod = ParseInt(ReadField(Field.TotalMod)),
+                TotalXP = ParseInt(ReadField(Field.FinalXP)),
+                Time = ParseTimeSpan(ReadField(Field.Time))
+            };
         }
 
         private int FindStartX(Field field)
@@ -117,6 +120,7 @@ namespace Dungeons2
             return -1;
         }
 
-        static int ParseOrDefault(string s) => int.TryParse(s, out int res) ? res : 0;
+        static int ParseInt(string s) => int.TryParse(s, out int res) ? res : 0;
+        static TimeSpan ParseTimeSpan(string s) => TimeSpan.TryParse(s, out TimeSpan res) ? res : TimeSpan.Zero;
     }
 }

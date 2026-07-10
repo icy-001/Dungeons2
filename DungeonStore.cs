@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -8,7 +9,7 @@ namespace Dungeons2
     /// <summary>
     /// Represents the state of the dungeon, including the map, key mask, and timing information.
     /// </summary>
-    public class DungeonStore
+    public partial class DungeonStore : ObservableObject
     {
         public static DungeonStore Instance { get; } = new();
 
@@ -21,13 +22,14 @@ namespace Dungeons2
         /// </summary>
         public Map Map { get; init; } = new();
 
-        /// <summary>
-        /// Gets or sets whether the dungeon is currently active.
-        /// </summary>
-        public bool Active { get; set; }
+        public bool IsActive { get; set; }
+        [ObservableProperty]
+        public partial bool IsMapFound { get; set; }
+        [ObservableProperty]
+        public partial bool IsKeybagFound { get; set; }
         public DateTimeOffset LastActiveTime { get; set; }
         public DateTimeOffset FloorStartTime { get; set; }
-        public WriteableBitmap MapImage { get; set; } = new(MapKeybagReader.MapWidth, MapKeybagReader.MapHeight, 96, 96, PixelFormats.Bgra32, null);
+        public WriteableBitmap MapImage { get; set; } = new(MapHudReader.MapWidth, MapHudReader.MapHeight, 96, 96, PixelFormats.Bgra32, null);
         public int FloorCounter { get; set; }
         public int RoomCount { get; set; }
         public List<(int, int)> RoomTicks { get; } = [];

@@ -3,13 +3,18 @@
 namespace Dungeons2
 {
     /// <summary>
-    /// 
+    /// A struct that reads map and HUD from a <href>RawImageView</href>.
     /// </summary>
-    /// <param name="img">Consist of 2 parts. Map is 280x280 starting at (0, 0). Keybag is 112x100 starting at (0, 280).</param>
-    public ref struct MapKeybagReader(RawImageView img)
+    /// <param name="img">
+    /// Consists of 2 parts.
+    /// - Map is 280 x 280 starting at (0, 0). 
+    /// - HUD is is 117 x 154 starting at (0, 280). The keybag portion of the HUD starts at (5, 332).
+    /// </param>
+    public ref struct MapHudReader(RawImageView img)
     {
         public const int MapWidth = 280, MapHeight = 280;
-        public const int KeybagStartY = MapHeight;
+        public const int KeybagOffsetX = 5, KeybagOffsetY = 52;
+        public const int HudStartY = MapHeight;
         public const int KeybagPadding = 2;
         public const double MatchThreshold = 200;
         public static readonly Color MapCornerColorMin = Color.FromArgb(100, 87, 65);
@@ -20,6 +25,7 @@ namespace Dungeons2
         public static readonly uint BossColor = (uint)Color.FromArgb(132, 57, 46).ToArgb();
 
         public readonly RawImageView Image = img;
+        static Registry Registry => Registry.Instance;
 
         // Color utils
         public static bool ColorBetween(Color color, Color min, Color max)
@@ -29,12 +35,11 @@ namespace Dungeons2
                 color.B >= min.B && color.B <= max.B;
         }
 
-        // Check if there is a map.
         public readonly bool HasMap() =>
             // Check for X. On Large, this is (265, 0). On medium and small, this is (137, 0).
             Image.IsExactMatch(Registry.MapMarker, 265, 0) || Image.IsExactMatch(Registry.MapMarker, 137, 0);
 
-        public readonly bool HasKeybag() => Image.GetColor(0, KeybagStartY) == KeybagBorderColor;
+        public readonly bool HasHud() => Image.IsExactMatch(Registry.HudMarker, 0, HudStartY);
 
         public readonly ulong ReadKeybag()
         {
@@ -43,7 +48,7 @@ namespace Dungeons2
                 for (int j = 0; j < 5; ++j)
                 {
                     bool found = false;
-                    int x = 2 + 22 * j, y = KeybagStartY + 3 + 20 * i;
+                    int x = KeybagOffsetX + 2 + 22 * j, y = HudStartY + KeybagOffsetY + 3 + 20 * i;
                     for (int k = 0; k < 64; ++k)
                     {
                         double dist = Image.MatchDistance(Registry.GetKeybagKey(k), x, y, MatchThreshold);

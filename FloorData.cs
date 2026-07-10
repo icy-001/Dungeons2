@@ -1,24 +1,26 @@
 ﻿namespace Dungeons2
 {
-    public record FloorData(
-        int Id = 0,
-        DateTimeOffset Timestamp = new(),
-        string Teammates = "",
-        int FloorNumber = 1,
-        string Size = "Small",
-        string Time = "",
-        double Bonus = 0,
-        int MobsKilledMod = 0,
-        int Boost = 0,
-        int TotalMod = 0,
-        int TotalXP = 0,
-        int RoomCount = 0,
-        int DeadEnds = 0,
-        int SkillDoors = 0,
-        int SkillDoorTicks = 0,
-        int PossiblePuzzleRooms = 0,
-        string Notes = "")
+    public class FloorData
     {
+        public int Id { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
+        public int TeamSize { get; set; } = 1;
+        public string Teammates { get; set; } = string.Empty;
+        public int FloorNumber { get; set; } = 1;
+        public TimeSpan Time { get; set; } = TimeSpan.Zero;
+        public string Size { get; set; } = "Small";
+        public double Bonus { get; set; }
+        public int MobsKilledMod { get; set; }
+        public int Boost { get; set; }
+        public int TotalMod { get; set; }
+        public int TotalXP { get; set; }
+        public int RoomCount { get; set; }
+        public int DeadEnds { get; set; }
+        public int SkillDoors { get; set; }
+        public int SkillDoorTicks { get; set; }
+        public int PossiblePuzzleRooms { get; set; }
+        public string Notes { get; set; } = string.Empty;
+
         public string ToTabSeparatedString() => $"{Id}\t{Timestamp:G}\t{Teammates}\t{FloorNumber}\t{Size}\t{Time}\t{Bonus}\t{MobsKilledMod}\t{Boost}\t{TotalMod}\t{TotalXP}\t{RoomCount}\t{DeadEnds}\t{SkillDoors}\t{SkillDoorTicks}\t{PossiblePuzzleRooms}\t{Notes}\n";
     }
 }

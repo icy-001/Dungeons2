@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using Dungeons2.Services;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -39,18 +40,9 @@ namespace Dungeons2
                 TrackingLoop();
                 UpdateText();
             };
-        }
 
-        public IntPtr RsHwnd
-        {
-            get; set
-            {
-                if (field != value)
-                {
-                    field = value;
-                    TrackingLoop();
-                }
-            }
+            MapCaptureService.Instance.OnNewFloor += () => Dispatcher.InvokeAsync(ClearRects);
+            MapCaptureService.Instance.OnMapChanged += () => Dispatcher.InvokeAsync(Update);
         }
 
         static DungeonStore DungeonStore => DungeonStore.Instance;
@@ -131,7 +123,7 @@ namespace Dungeons2
         /// </summary>
         private void TrackingLoop()
         {
-            if (RsHwnd == IntPtr.Zero || !DungeonStore.Active)
+            if (MapCaptureService.Instance.TargetWindowHandle == IntPtr.Zero || !DungeonStore.IsActive)
             {
                 if (Visibility != Visibility.Hidden)
                     Visibility = Visibility.Hidden;
@@ -139,7 +131,7 @@ namespace Dungeons2
             }
 
             IntPtr activeHwnd = User32.GetForegroundWindow();
-            bool isGameActive = activeHwnd == RsHwnd || activeHwnd == hwnd;
+            bool isGameActive = activeHwnd == MapCaptureService.Instance.TargetWindowHandle || activeHwnd == hwnd;
 
             if (!isGameActive)
             {
@@ -151,8 +143,8 @@ namespace Dungeons2
             if (Visibility != Visibility.Visible)
                 Visibility = Visibility.Visible;
 
-            var topLeft = new POINT { X = Settings.Default.MapX, Y = Settings.Default.MapY };
-            _ = User32.ClientToScreen(RsHwnd, ref topLeft);
+            var topLeft = new POINT { X = Settings.Instance.MapX, Y = Settings.Instance.MapY };
+            _ = User32.ClientToScreen(MapCaptureService.Instance.TargetWindowHandle, ref topLeft);
             _ = User32.SetWindowPos(
                 hwnd,
                 IntPtr.Zero,
@@ -165,7 +157,7 @@ namespace Dungeons2
 
         private void UpdateText()
         {
-            if (!DungeonStore.Active)
+            if (!DungeonStore.IsActive)
             {
                 StatusBorder.Visibility = Visibility.Hidden;
                 return;
@@ -177,8 +169,8 @@ namespace Dungeons2
             if (elapsed.TotalMilliseconds < 0)
                 return;
             double rpm = CalculateRpm(c, elapsed.TotalMinutes);
-            double targetRpm = DungeonStore.Map.PlayerCount > 0 && DungeonStore.Map.PlayerCount <= Settings.Default.TargetRpms.Length
-                ? Settings.Default.TargetRpms[DungeonStore.Map.PlayerCount - 1]
+            double targetRpm = DungeonStore.Map.PlayerCount > 0 && DungeonStore.Map.PlayerCount <= Settings.Instance.TargetRpms.Length
+                ? Settings.Instance.TargetRpms[DungeonStore.Map.PlayerCount - 1]
                 : 0;
             double ratio = rpm / targetRpm;
             int ticks = (int)Math.Ceiling((double)DungeonStore.RoomTimer.ElapsedMilliseconds / 600);
