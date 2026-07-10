@@ -2,7 +2,15 @@
 {
     public class Map
     {
-        public Map() { Clear(); }
+        public Map() => Clear();
+
+        public Map(Map original)
+        {
+            Array.Copy(original.Rooms, Rooms, Rooms.Length);
+            Base = original.Base;
+            Boss = original.Boss;
+            original.PlayerLocations.CopyTo(PlayerLocations, 0);
+        }
 
         public Room[,] Rooms { get; } = new Room[8, 8];
         public Coord Base { get; set; } = Coord.Nothing;
@@ -18,8 +26,7 @@
             for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)
                     Rooms[i, j] = new();
-            for (int p = 0; p < PlayerLocations.Length; p++)
-                PlayerLocations[p] = null;
+            Array.Clear(PlayerLocations, 0, PlayerLocations.Length);
         }
 
         /// <summary>
@@ -27,12 +34,19 @@
         /// </summary>
         /// <param name="other">The other map.</param>
         /// <returns>True if there was a change; otherwise, false.</returns>
-        public bool Merge(Map other)
+        public (bool Changed, Coord[] NewRoomLocations) Merge(Map other)
         {
             bool changed = false;
+            List<Coord> newRoomLocations = [];
             for (int r = 0; r < 8; r++)
                 for (int c = 0; c < 8; c++)
-                    changed |= Rooms[r, c].Merge(other.Rooms[r, c]);
+                {
+                    ref var oldRoom = ref Rooms[r, c];
+                    ref var newRoom = ref other.Rooms[r, c];
+                    if (newRoom.Opened && !oldRoom.Opened)
+                        newRoomLocations.Add(new Coord(r, c));
+                    changed |= oldRoom.Merge(newRoom);
+                }
             if (other.Base != Coord.Nothing && Base != other.Base)
             {
                 Base = other.Base;
@@ -45,7 +59,7 @@
             }
             changed |= !Enumerable.SequenceEqual(PlayerLocations, other.PlayerLocations);
             other.PlayerLocations.CopyTo(PlayerLocations, 0);
-            return changed;
+            return (changed, newRoomLocations.ToArray());
         }
 
         public void AssignParents()
@@ -152,5 +166,7 @@
             Directions.N => Directions.S,
             _ => Directions.None
         };
+
+        public Map Clone() => new(this);
     }
 }

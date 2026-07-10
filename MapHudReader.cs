@@ -37,7 +37,8 @@ namespace Dungeons2
 
         public readonly bool HasMap() =>
             // Check for X. On Large, this is (265, 0). On medium and small, this is (137, 0).
-            Image.IsExactMatch(Registry.MapMarker, 265, 0) || Image.IsExactMatch(Registry.MapMarker, 137, 0);
+            ColorBetween(Color.FromArgb((int)Image[0, 0]), MapCornerColorMin, MapCornerColorMax) &&
+            (Image.IsExactMatch(Registry.MapMarker, 265, 0) || Image.IsExactMatch(Registry.MapMarker, 137, 0));
 
         public readonly bool HasHud() => Image.IsExactMatch(Registry.HudMarker, 0, HudStartY);
 

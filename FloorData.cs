@@ -20,6 +20,8 @@
         public int SkillDoorTicks { get; set; }
         public int PossiblePuzzleRooms { get; set; }
         public string Notes { get; set; } = string.Empty;
+        public Map? Map { get; set; }
+        public RoomSplit[] RoomTicks { get; set; } = [];
 
         public string ToTabSeparatedString() => $"{Id}\t{Timestamp:G}\t{Teammates}\t{FloorNumber}\t{Size}\t{Time}\t{Bonus}\t{MobsKilledMod}\t{Boost}\t{TotalMod}\t{TotalXP}\t{RoomCount}\t{DeadEnds}\t{SkillDoors}\t{SkillDoorTicks}\t{PossiblePuzzleRooms}\t{Notes}\n";
     }

@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Dungeons2.Services;
-using System.Collections.ObjectModel;
-using System.Windows;
+using System.ComponentModel;
+using System.Windows.Data;
 
 namespace Dungeons2.ViewModels
 {
@@ -9,19 +8,14 @@ namespace Dungeons2.ViewModels
     {
         public HomeViewModel()
         {
-            MapCaptureService.Instance.OnFloorCompleted += (floorData) =>
-            {
-                Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    FloorHistory.Add(floorData);
-                });
-            };
+            LiveRoomTicksView = CollectionViewSource.GetDefaultView(DungeonStore.RoomTicks);
+            LiveRoomTicksView.Filter = item => ((RoomSplit)item).Ticks > 0;
         }
-
-        public ObservableCollection<FloorData> FloorHistory { get; } = [];
 
         [ObservableProperty]
         public partial FloorData? SelectedFloor { get; set; }
+
+        public ICollectionView LiveRoomTicksView { get; }
 
         public static DungeonStore DungeonStore => DungeonStore.Instance;
     }

@@ -83,11 +83,11 @@ namespace Dungeons2.Services
             if (!DungeonStore.IsActive)
                 NewFloor();
             DungeonStore.LastActiveTime = DateTimeOffset.Now;
-            var (map, roomCount) = reader.ReadMap();
-            bool mapChanged = DungeonStore.Map.Merge(map);
+            var (newMap, newRoomCount) = reader.ReadMap();
+            var (mapChanged, newRoomLocations) = DungeonStore.Map.Merge(newMap);
 
-            ulong currentKeymask = reader.ReadKeybag();
-            ulong keymaskDelta = currentKeymask & ~DungeonStore.KeyMask;
+            ulong newKeymask = reader.ReadKeybag();
+            ulong keymaskDelta = newKeymask & ~DungeonStore.KeyMask;
             // Since the 2026/7/6 update we can now track key locations in solos accurately.
             if (keymaskDelta != 0 && DungeonStore.Map.PlayerCount == 1)
             {
@@ -100,36 +100,45 @@ namespace Dungeons2.Services
                     }
             }
             bool changed = mapChanged || keymaskDelta != 0;
-            if (roomCount > DungeonStore.RoomCount)
+            if (newRoomCount > DungeonStore.RoomCount)
             {
-                DungeonStore.RoomCount = roomCount;
-                int ticks = (int)Math.Round(DungeonStore.RoomTimer.Elapsed.TotalMilliseconds / 600);
-                if (roomCount > 1)
+                if (DungeonStore.RoomCount == 0)
                 {
-                    DungeonStore.RoomTicks.Add((roomCount, ticks));
-                    LogService.Instance.Log($"Room {roomCount} took {ticks} ticks ({ticks * 0.6:F1} s)");
+                    if (newRoomCount == 1)
+                        DungeonStore.RoomTicks.Add(new(DungeonStore.Map.Base.Row, DungeonStore.Map.Base.Col, 0));
+                    else
+                        DungeonStore.IsPartial = true;
                 }
-                DungeonStore.RoomTimer.Restart();
+                DungeonStore.RoomCount = newRoomCount;
+                int ticks = (int)Math.Round(DungeonStore.RoomStopwatch.Elapsed.TotalMilliseconds / 600);
+                if (newRoomCount > 1)
+                    foreach (var (i, j) in newRoomLocations)
+                    {
+                        DungeonStore.RoomTicks.Add(new(i, j, ticks));
+                        LogService.Instance.Log($"Room {DungeonStore.RoomTicks.Count} took {ticks} ticks ({ticks * 0.6:F1} s)");
+                        ticks = 0;  // Rooms opened simultaneously are considered to have taken 0 ticks after the first one.
+                    }
+                DungeonStore.RoomStopwatch.Restart();
             }
             if (changed)
             {
-                DungeonStore.KeyMask |= currentKeymask;
+                DungeonStore.KeyMask |= newKeymask;
+                DungeonStore.UpdateAnnotatedMapImage();
                 OnMapChanged?.Invoke();
             }
-
             DungeonStore.UpdateMapImage(mapKeybagImage);
         }
 
         private void NewFloor()
         {
-            // New floor.
             DungeonStore.IsActive = true;
+            DungeonStore.IsPartial = false;
             DungeonStore.KeyMask = 0;
             DungeonStore.RoomCount = 0;
             DungeonStore.FloorStartTime = DateTimeOffset.Now - TimeSpan.FromMilliseconds(1150); // Empirical
             DungeonStore.Map.Clear();
             DungeonStore.RoomTicks.Clear();
-            DungeonStore.RoomTimer.Restart();
+            DungeonStore.RoomStopwatch.Restart();
             OnNewFloor?.Invoke();
             LogService.Instance.Log($"Start of floor {++DungeonStore.FloorCounter}");
         }
@@ -140,12 +149,12 @@ namespace Dungeons2.Services
             StringBuilder notesSB = new();
             for (int i = 0; i < DungeonStore.RoomTicks.Count; ++i)
             {
-                var (r, ticks) = DungeonStore.RoomTicks[i];
+                var (_, _, ticks) = DungeonStore.RoomTicks[i];
                 if (ticks >= 20)
                 {
                     if (notesSB.Length > 0)
                         _ = notesSB.Append(", ");
-                    _ = notesSB.Append($"r{r}: {ticks}t");
+                    _ = notesSB.Append($"r{i + 1}: {ticks}t");
                 }
             }
 
@@ -159,6 +168,8 @@ namespace Dungeons2.Services
             floorData.SkillDoorTicks = skillTicks;
             floorData.PossiblePuzzleRooms = DungeonStore.Map.PossiblePuzzleCount();
             floorData.Notes = notesSB.ToString();
+            floorData.Map = DungeonStore.Map.Clone();
+            floorData.RoomTicks = [.. DungeonStore.RoomTicks];
 
             LogService.Instance.Log($"Floor {DungeonStore.FloorCounter} time={floorData.Time} | key count={BitOperations.PopCount(DungeonStore.KeyMask)}");
 

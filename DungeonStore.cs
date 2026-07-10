@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Dungeons2.Services;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
@@ -24,16 +26,36 @@ namespace Dungeons2
 
         public bool IsActive { get; set; }
         [ObservableProperty]
+        public partial bool IsPartial { get; set; }
+        [ObservableProperty]
         public partial bool IsMapFound { get; set; }
         [ObservableProperty]
         public partial bool IsKeybagFound { get; set; }
         public DateTimeOffset LastActiveTime { get; set; }
         public DateTimeOffset FloorStartTime { get; set; }
         public WriteableBitmap MapImage { get; set; } = new(MapHudReader.MapWidth, MapHudReader.MapHeight, 96, 96, PixelFormats.Bgra32, null);
+        public RenderTargetBitmap AnnotatedMapImage { get; set; } = new(MapHudReader.MapWidth, MapHudReader.MapHeight, 96, 96, PixelFormats.Pbgra32);
         public int FloorCounter { get; set; }
         public int RoomCount { get; set; }
-        public List<(int, int)> RoomTicks { get; } = [];
-        public Stopwatch RoomTimer { get; } = new();
+        public ObservableCollection<RoomSplit> RoomTicks { get; } = [];
+        public Stopwatch RoomStopwatch { get; } = new();
+        public ObservableCollection<FloorData> FloorHistory { get; } = [];
+
+        private DungeonStore()
+        {
+            MapCaptureService.Instance.OnFloorCompleted += (floorData) =>
+            {
+                Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    FloorHistory.Add(floorData);
+                });
+            };
+
+#if DEBUG
+            FloorHistory.Add(new FloorData { FloorNumber = 1, Size = "Small", Time = TimeSpan.Parse("0:07:00"), Bonus = 1 });
+            FloorHistory.Add(new FloorData { FloorNumber = 15, Size = "Medium", Time = TimeSpan.Parse("1:03:05"), Bonus = 1 });
+#endif
+        }
 
         public void UpdateMapImage(RawImageView image)
         {
@@ -78,6 +100,14 @@ namespace Dungeons2
             {
                 MapImage.AddDirtyRect(new Int32Rect(0, 0, copyWidth, copyHeight));
                 MapImage.Unlock();
+            });
+        }
+
+        public void UpdateAnnotatedMapImage()
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                AnnotatedMapRenderer.DrawMap(MapHudReader.MapWidth, MapHudReader.MapHeight, Map, AnnotatedMapImage);
             });
         }
     }

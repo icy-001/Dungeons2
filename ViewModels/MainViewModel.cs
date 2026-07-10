@@ -11,6 +11,10 @@ namespace Dungeons2.ViewModels
 
     public partial class MainViewModel : ObservableObject
     {
+        private readonly HomeViewModel _homeViewModel = new();
+        private readonly LogViewModel _logViewModel = new();
+        private readonly SettingsViewModel _settingsViewModel = new();
+
         [ObservableProperty]
         public partial object CurrentView { get; set; }
 
@@ -23,7 +27,7 @@ namespace Dungeons2.ViewModels
 
         public MainViewModel()
         {
-            CurrentView = new HomeViewModel();
+            CurrentView = _homeViewModel;
             _processTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1200) };
             _processTimer.Tick += (s, e) => UpdateProcesses();
             _processTimer.Start();
@@ -45,9 +49,9 @@ namespace Dungeons2.ViewModels
         {
             CurrentView = viewName switch
             {
-                "Home" => new HomeViewModel(),
-                "Log" => new LogViewModel(),
-                "Settings" => new SettingsViewModel(),
+                "Home" => _homeViewModel,
+                "Log" => _logViewModel,
+                "Settings" => _settingsViewModel,
                 _ => CurrentView
             };
         }

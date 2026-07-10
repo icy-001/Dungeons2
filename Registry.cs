@@ -38,6 +38,8 @@ namespace Dungeons2
         ];
 
         public RawImage HudMarker { get; private set; } = new();
+        public BitmapSource? BaseOverlayBitmap { get; private set; }
+        public BitmapSource? BossOverlayBitmap { get; private set; }
 
         private readonly (string, int)[] skillDoorData = [
             ("Crafting", 2),
@@ -108,6 +110,11 @@ namespace Dungeons2
                 {
                     SkillDoors[i] = new(skillDoorData[i].Item1, skillDoorData[i].Item2, new(skillIcons[i], HighlightedKeyWidth, HighlightedKeyHeight));
                 }
+
+                var baseOverlay = SpriteLoader.LoadSprite("Dungeons2.Images.base_overlay.png");
+                BaseOverlayBitmap = BitmapSource.Create(baseOverlay.Width, baseOverlay.Height, 96, 96, PixelFormats.Bgra32, null, baseOverlay.Pixels, baseOverlay.Width * 4);
+                var bossOverlay = SpriteLoader.LoadSprite("Dungeons2.Images.boss_overlay.png");
+                BossOverlayBitmap = BitmapSource.Create(bossOverlay.Width, bossOverlay.Height, 96, 96, PixelFormats.Bgra32, null, bossOverlay.Pixels, bossOverlay.Width * 4);
 
                 _isInitialized = true;
             }

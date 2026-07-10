@@ -173,7 +173,7 @@ namespace Dungeons2
                 ? Settings.Instance.TargetRpms[DungeonStore.Map.PlayerCount - 1]
                 : 0;
             double ratio = rpm / targetRpm;
-            int ticks = (int)Math.Ceiling((double)DungeonStore.RoomTimer.ElapsedMilliseconds / 600);
+            int ticks = (int)Math.Ceiling((double)DungeonStore.RoomStopwatch.ElapsedMilliseconds / 600);
             RoomsRun.Text = $"{c,2}";
             DERun.Text = $"{d,2}";
             DELabel.Text = d == 1 ? "dead end" : "dead ends";
@@ -181,7 +181,7 @@ namespace Dungeons2
             TicksRun.Foreground = ticks < 10 ? Brushes.Lime : ticks < 20 ? Brushes.Yellow : Brushes.Red;
             RpmRun.Text = $"{rpm,2:F1}";
             RpmRun.Foreground = RpmRatioToBrush(ratio);
-            HistoryRun.Text = string.Join(" • ", from x in DungeonStore.RoomTicks.TakeLast(4) select x.Item2.ToString().PadLeft(2));
+            HistoryRun.Text = string.Join(" • ", from x in DungeonStore.RoomTicks.TakeLast(4) select x.Ticks.ToString().PadLeft(2));
         }
 
         static SolidColorBrush RpmRatioToBrush(double ratio)

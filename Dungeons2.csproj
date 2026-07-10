@@ -14,13 +14,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Images\hud_marker.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="Images\highlighted_keys.png" />
-    <None Remove="Images\ring-of-kinship.ico" />
-    <None Remove="Images\skills.png" />
+    <None Remove="Images\base_overlay.png" />
+    <None Remove="Images\boss_overlay.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -62,6 +57,8 @@
     <EmbeddedResource Include="Fonts\Small\colon.png" />
     <EmbeddedResource Include="Fonts\Small\minus.png" />
     <EmbeddedResource Include="Fonts\Small\plus.png" />
+    <EmbeddedResource Include="Images\base_overlay.png" />
+    <EmbeddedResource Include="Images\boss_overlay.png" />
     <EmbeddedResource Include="Images\highlighted_keys.png" />
     <EmbeddedResource Include="Images\hud_marker.png" />
     <EmbeddedResource Include="Images\keys.png" />
