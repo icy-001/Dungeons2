@@ -20,8 +20,9 @@ namespace Dungeons2
         public readonly uint[][] MapKeys = new uint[64][];
         public readonly uint[][] KeybagKeys = new uint[64][];
         public readonly uint[][] HighlightedKeys = new uint[64][];
-        public readonly BitmapSource[] RoomBitmaps = new BitmapSource[16];
         public readonly uint[][] RoomSignatures = new uint[16][];
+        public readonly BitmapSource[] RoomBitmaps = new BitmapSource[16];
+        public readonly BitmapSource[] CritRoomBitmaps = new BitmapSource[16];
         public readonly BitmapSource[] MysteryBitmaps = new BitmapSource[4];
         public readonly BitmapSource[] UnopenedBitmaps = new BitmapSource[4];
 
@@ -99,6 +100,14 @@ namespace Dungeons2
                     RoomSignatures[i] = ComputeSignature(new(rooms[i], 32, 32));
                 }
 
+                uint[][] crit = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.critical_rooms.png", 1, 16, 32, 32);
+                for (int i = 0; i < 16; ++i)
+                {
+                    var bitmap = BitmapSource.Create(32, 32, 96, 96, PixelFormats.Bgra32, null, crit[i], 32 * 4);
+                    bitmap.Freeze();
+                    CritRoomBitmaps[i] = bitmap;
+                }
+
                 uint[][] mystery = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.mystery.png", 1, 4, 32, 32);
                 for (int i = 0; i < 4; ++i)
                 {
@@ -167,9 +176,6 @@ namespace Dungeons2
             ];
         }
 
-        public static SolidColorBrush GetTicksBrush(int ticks)
-        {
-            return ticks < 10 ? Brushes.Lime : ticks < 20 ? Brushes.Yellow : Brushes.Red;
-        }
+        public static SolidColorBrush GetTicksBrush(int ticks) => ticks < 10 ? Brushes.Lime : ticks < 20 ? Brushes.Yellow : Brushes.Red;
     }
 }

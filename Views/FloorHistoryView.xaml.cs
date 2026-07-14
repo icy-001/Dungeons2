@@ -10,9 +10,6 @@ namespace Dungeons2.Views
             InitializeComponent();
         }
 
-        private void FloorsHyperlink_Click(object sender, System.Windows.RoutedEventArgs e)
-        {
-            _ = Process.Start(new ProcessStartInfo { FileName = "floors.txt", UseShellExecute = true });
-        }
+        private void FloorsHyperlink_Click(object sender, System.Windows.RoutedEventArgs e) => _ = Process.Start(new ProcessStartInfo { FileName = "floors.txt", UseShellExecute = true });
     }
 }

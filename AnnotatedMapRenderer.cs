@@ -11,7 +11,8 @@ namespace Dungeons2
 
         public static void DrawMap(DrawingContext dc, int offX, int offY, Map map)
         {
-            var unopenedGrid = ComputeUnopenedGrid(map);
+            byte[,] unopenedGrid = map.ComputeUnopenedGrid();
+            bool[,] criticalGrid = map.ComputeCriticalGrid();
 
             for (int i = 0; i < 8; ++i)
                 for (int j = 0; j < 8; ++j)
@@ -24,7 +25,7 @@ namespace Dungeons2
 
                     if (room.Opened)
                     {
-                        dc.DrawImage(Registry.RoomBitmaps[(int)room.Doors], new(x, y, 32, 32));
+                        dc.DrawImage(criticalGrid[i, j] ? Registry.CritRoomBitmaps[(int)room.Doors] : Registry.RoomBitmaps[(int)room.Doors], new(x, y, 32, 32));
                         if (room.IsBase)
                             dc.DrawImage(Registry.BaseOverlayBitmap, new(x, y, 32, 32));
                         else if (room.IsBoss)
@@ -64,7 +65,7 @@ namespace Dungeons2
         {
             foreach (var (r, c, ticks) in roomTicks)
             {
-                if (ticks <= 0)
+                if (r < 0 || c < 0 || ticks <= 0)
                     continue;
 
                 int x = c * 32 + offX;
@@ -82,24 +83,6 @@ namespace Dungeons2
 
                 dc.DrawText(text, new Point(x + 4, y + 18));
             }
-        }
-
-        private static byte[,] ComputeUnopenedGrid(Map map)
-        {
-            byte[,] mystery = new byte[8, 8];
-            for (int r = 0; r < 8; r++)
-            {
-                for (int c = 0; c < 8; c++)
-                {
-                    var room = map[r, c];
-                    if (!room.Opened) continue;
-                    if (room.Doors.HasFlag(Directions.W) && c > 0 && !map[r, c - 1].Opened) mystery[r, c - 1] = 2;
-                    if (room.Doors.HasFlag(Directions.E) && c < 7 && !map[r, c + 1].Opened) mystery[r, c + 1] = 1;
-                    if (room.Doors.HasFlag(Directions.S) && r < 7 && !map[r + 1, c].Opened) mystery[r + 1, c] = 4;
-                    if (room.Doors.HasFlag(Directions.N) && r > 0 && !map[r - 1, c].Opened) mystery[r - 1, c] = 3;
-                }
-            }
-            return mystery;
         }
     }
 }

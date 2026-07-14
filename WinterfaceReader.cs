@@ -121,6 +121,6 @@ namespace Dungeons2
         }
 
         static int ParseInt(string s) => int.TryParse(s, out int res) ? res : 0;
-        static TimeSpan ParseTimeSpan(string s) => TimeSpan.TryParse(s, out TimeSpan res) ? res : TimeSpan.Zero;
+        static TimeSpan ParseTimeSpan(string s) => TimeSpan.TryParse(s, out var res) ? res : TimeSpan.Zero;
     }
 }

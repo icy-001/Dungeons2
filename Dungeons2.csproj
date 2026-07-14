@@ -61,6 +61,7 @@
     <EmbeddedResource Include="Fonts\Small\plus.png" />
     <EmbeddedResource Include="Images\base_overlay.png" />
     <EmbeddedResource Include="Images\boss_overlay.png" />
+    <EmbeddedResource Include="Images\critical_rooms.png" />
     <EmbeddedResource Include="Images\highlighted_keys.png" />
     <EmbeddedResource Include="Images\hud_marker.png" />
     <EmbeddedResource Include="Images\keys.png" />

@@ -25,10 +25,11 @@ namespace Dungeons2
 
         public int Rows { get; }
         public int Cols { get; }
-        public Room[] Rooms { get; }
+        public Room[] Rooms { get; init; }
         public Coord Base { get; set; } = Coord.Nothing;
         public Coord Boss { get; set; } = Coord.Nothing;
-        public Coord?[] PlayerLocations { get; } = new Coord?[5];
+        public Coord?[] PlayerLocations { get; init; } = new Coord?[5];
+        [JsonIgnore]
         public int PlayerCount => PlayerLocations.Count(p => p.HasValue);
 
         static readonly Directions[] SingleDirections = [Directions.W, Directions.E, Directions.S, Directions.N];
@@ -36,9 +37,9 @@ namespace Dungeons2
 
         public int Index(int row, int col)
         {
-            if (row < 0 || row >= Rows || col < 0 || col >= Cols)
-                throw new ArgumentOutOfRangeException(nameof(row), "Row or column is out of range.");
-            return row * Cols + col;
+            return row < 0 || row >= Rows || col < 0 || col >= Cols
+                ? throw new ArgumentOutOfRangeException(nameof(row), "Row or column is out of range.")
+                : row * Cols + col;
         }
 
         public ref Room this[int row, int col] => ref Rooms[Index(row, col)];
@@ -161,6 +162,89 @@ namespace Dungeons2
             return res;
         }
 
+        public ulong KeyMask()
+        {
+            ulong res = 0;
+            for (int i = 0; i < Rows; i++)
+                for (int j = 0; j < Cols; j++)
+                    if (this[i, j].Key != -1)
+                        res |= 1UL << this[i, j].Key;
+            return res;
+        }
+
+        public ulong LockMask()
+        {
+            ulong res = 0;
+            for (int i = 0; i < Rows; i++)
+                for (int j = 0; j < Cols; j++)
+                    if (this[i, j].Lock != -1)
+                        res |= 1UL << this[i, j].Lock;
+            return res;
+        }
+
+        public byte[,] ComputeUnopenedGrid()
+        {
+            byte[,] mystery = new byte[8, 8];
+            for (int r = 0; r < 8; r++)
+            {
+                for (int c = 0; c < 8; c++)
+                {
+                    var room = this[r, c];
+                    if (!room.Opened) continue;
+                    if (room.Doors.HasFlag(Directions.W) && c > 0 && !this[r, c - 1].Opened) mystery[r, c - 1] = 2;
+                    if (room.Doors.HasFlag(Directions.E) && c < 7 && !this[r, c + 1].Opened) mystery[r, c + 1] = 1;
+                    if (room.Doors.HasFlag(Directions.S) && r < 7 && !this[r + 1, c].Opened) mystery[r + 1, c] = 4;
+                    if (room.Doors.HasFlag(Directions.N) && r > 0 && !this[r - 1, c].Opened) mystery[r - 1, c] = 3;
+                }
+            }
+            return mystery;
+        }
+
+        public bool[,] ComputeCriticalGrid()
+        {
+            bool[,] res = new bool[8, 8];
+            if (Boss == Coord.Nothing || Base == Coord.Nothing || PlayerCount != 1 || KeyMask() == 0)
+                return res;
+            res[Base.Row, Base.Col] = true;
+            var keyLocs = new Coord[64];
+            for (int i = 0; i < 8; i++)
+                for (int j = 0; j < 8; j++)
+                {
+                    var room = this[i, j];
+                    if (room.Key != -1)
+                        keyLocs[room.Key] = new(i, j);
+                }
+            Stack<int> criticalKeys = [];
+            void MakeCritical(Coord pos)
+            {
+                for (; !res[pos.Row, pos.Col]; pos = Add(pos, this[pos.Row, pos.Col].Parent))
+                {
+                    res[pos.Row, pos.Col] = true;
+                    if (this[pos.Row, pos.Col].Lock != -1)
+                        criticalKeys.Push(this[pos.Row, pos.Col].Lock);
+                }
+            }
+            MakeCritical(Boss);
+            while (criticalKeys.TryPop(out int key))
+                MakeCritical(keyLocs[key]);
+            return res;
+        }
+
+        public (int Count, int KeyCount) ComputeCriticalStats()
+        {
+            int count = 0, keyCount = 0;
+            bool[,] criticalGrid = ComputeCriticalGrid();
+            for (int i = 0; i < Rows; i++)
+                for (int j = 0; j < Cols; j++)
+                    if (criticalGrid[i, j])
+                    {
+                        ++count;
+                        if (this[i, j].Lock != -1)
+                            ++keyCount;
+                    }
+            return (count, keyCount);
+        }
+
         public (int Count, int Ticks) SkillDoorStats()
         {
             int count = 0, ticks = 0;
@@ -175,7 +259,7 @@ namespace Dungeons2
             return (count, ticks);
         }
 
-        static Coord Add(Coord p, Directions d) => d switch
+        public static Coord Add(Coord p, Directions d) => d switch
         {
             Directions.W => new(p.Row, p.Col - 1),
             Directions.E => new(p.Row, p.Col + 1),

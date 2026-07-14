@@ -79,7 +79,7 @@ namespace Dungeons2
             for (int i = 0; i < 8; ++i)
                 for (int j = 0; j < 8; ++j)
                 {
-                    ref Room currentRoom = ref res[i, j];
+                    ref var currentRoom = ref res[i, j];
 
                     int x = 12 + 32 * j, y = 12 + 32 * i;
                     uint[] sig = Registry.ComputeSignature(Image, x, y);

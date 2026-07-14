@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -15,10 +14,7 @@ namespace Dungeons2.Views
             InitializeComponent();
         }
 
-        private void FloorsHyperlink_Click(object sender, System.Windows.RoutedEventArgs e)
-        {
-            _ = Process.Start(new ProcessStartInfo { FileName = "floors.txt", UseShellExecute = true });
-        }
+        private void FloorsHyperlink_Click(object sender, System.Windows.RoutedEventArgs e) => _ = Process.Start(new ProcessStartInfo { FileName = "floors.txt", UseShellExecute = true });
 
         private void RoomTickHistogramScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {

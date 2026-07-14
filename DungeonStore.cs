@@ -2,8 +2,6 @@
 using Dungeons2.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -54,10 +52,13 @@ namespace Dungeons2
             };
 
 #if DEBUG
-            foreach (var line in File.ReadLines("floors.jsonl"))
-            {
-                FloorHistory.Add(JsonSerializer.Deserialize<FloorData>(line));
-            }
+            if (System.IO.File.Exists("floors.jsonl"))
+                foreach (string line in System.IO.File.ReadLines("floors.jsonl"))
+                {
+                    var floorData = System.Text.Json.JsonSerializer.Deserialize<FloorData>(line);
+                    if (floorData is not null)
+                        FloorHistory.Add(floorData);
+                }
 #endif
         }
 
@@ -109,9 +110,9 @@ namespace Dungeons2
 
         public void UpdateAnnotatedMapImage()
         {
-            int offX = 12, offY = 12;
+            const int offX = 12, offY = 12;
             DrawingVisual visual = new();
-            using (DrawingContext dc = visual.RenderOpen())
+            using (var dc = visual.RenderOpen())
             {
                 dc.DrawRectangle(Brushes.Black, null, new(0, 0, MapHudReader.MapWidth, MapHudReader.MapHeight));
                 AnnotatedMapRenderer.DrawMap(dc, offX, offY, Map);

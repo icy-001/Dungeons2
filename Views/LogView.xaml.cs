@@ -20,7 +20,7 @@ namespace Dungeons2.Views
 
         private void HandleNewLog((DateTimeOffset, string) logEntry)
         {
-            Application.Current.Dispatcher.InvokeAsync(() =>
+            _ = Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 LogTextBox.AppendText($"[{logEntry.Item1:G}] {logEntry.Item2}\n");
                 LogTextBox.ScrollToEnd();

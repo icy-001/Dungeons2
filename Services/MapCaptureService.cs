@@ -70,7 +70,7 @@ namespace Dungeons2.Services
                         // Just ended floor
                         DungeonStore.KeyMask = 0;
                         DungeonStore.IsActive = false;
-                        var floorEndTicks = (int)(DungeonStore.RoomStopwatch.Elapsed.TotalMilliseconds / 600);
+                        int floorEndTicks = (int)(DungeonStore.RoomStopwatch.Elapsed.TotalMilliseconds / 600);
                         DungeonStore.RoomTicks.Add(new(-1, -1, floorEndTicks));
                         LogService.Instance.Log($"Ending floor took {floorEndTicks} ticks ({floorEndTicks * 0.6:F1} s)");
                     }
@@ -101,17 +101,6 @@ namespace Dungeons2.Services
 
             ulong newKeymask = reader.ReadKeybag();
             ulong keymaskDelta = newKeymask & ~DungeonStore.KeyMask;
-            // Since the 2026/7/6 update we can now track key locations in solos accurately.
-            if (keymaskDelta != 0 && DungeonStore.Map.PlayerCount == 1)
-            {
-                var loc = DungeonStore.Map.PlayerLocations[0]!.Value;
-                for (int k = 0; k < 64; ++k)
-                    if ((keymaskDelta & 1UL << k) != 0)
-                    {
-                        LogService.Instance.Log($"Found key {Registry.Instance.GetKeyName(k)} in {loc.ToChessString()}");
-                        DungeonStore.Map[loc.Row, loc.Col].Key = k;
-                    }
-            }
             bool changed = mapChanged || keymaskDelta != 0;
             if (newRoomCount > DungeonStore.RoomCount)
             {
@@ -132,6 +121,17 @@ namespace Dungeons2.Services
                         ticks = 0;  // Rooms opened simultaneously are considered to have taken 0 ticks after the first one.
                     }
                 DungeonStore.RoomStopwatch.Restart();
+            }
+            // Since the 2026/7/6 update we can now track key locations in solos accurately.
+            if (keymaskDelta != 0 && DungeonStore.Map.PlayerCount == 1 && !DungeonStore.IsPartial)
+            {
+                var loc = DungeonStore.Map.PlayerLocations[0]!.Value;
+                for (int k = 0; k < 64; ++k)
+                    if ((keymaskDelta & 1UL << k) != 0)
+                    {
+                        LogService.Instance.Log($"Found key {Registry.Instance.GetKeyName(k)} in {loc.ToChessString()}");
+                        DungeonStore.Map[loc.Row, loc.Col].Key = k;
+                    }
             }
             if (changed)
             {
