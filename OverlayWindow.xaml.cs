@@ -59,8 +59,8 @@ namespace Dungeons2
             for (int i = 0; i < 8; ++i)
                 for (int j = 0; j < 8; ++j)
                 {
-                    int key = DungeonStore.Map.Rooms[i, j].Lock;
-                    bool unlockable = key >= 0 && key < 64 && (DungeonStore.KeyMask & (1UL << key)) != 0 && !DungeonStore.Map.Rooms[i, j].Opened;
+                    int key = DungeonStore.Map[i, j].Lock;
+                    bool unlockable = key >= 0 && key < 64 && (DungeonStore.KeyMask & (1UL << key)) != 0 && !DungeonStore.Map[i, j].Opened;
                     if (unlockable && activeRects[i, j] is null)
                     {
                         var rect = new Rectangle
@@ -178,7 +178,7 @@ namespace Dungeons2
             DERun.Text = $"{d,2}";
             DELabel.Text = d == 1 ? "dead end" : "dead ends";
             TicksRun.Text = $"{ticks,2}t";
-            TicksRun.Foreground = ticks < 10 ? Brushes.Lime : ticks < 20 ? Brushes.Yellow : Brushes.Red;
+            TicksRun.Foreground = Registry.GetTicksBrush(ticks);
             RpmRun.Text = $"{rpm,2:F1}";
             RpmRun.Foreground = RpmRatioToBrush(ratio);
             HistoryRun.Text = string.Join(" • ", from x in DungeonStore.RoomTicks.TakeLast(4) select x.Ticks.ToString().PadLeft(2));

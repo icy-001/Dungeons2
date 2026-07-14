@@ -6,7 +6,7 @@
         xmlns:viewmodels="clr-namespace:Dungeons2.ViewModels"
         xmlns:views="clr-namespace:Dungeons2.Views"
         xmlns:local="clr-namespace:Dungeons2"
-        mc:Ignorable="d" Title="Dungeons" Height="800" Width="1200"
+        mc:Ignorable="d" Title="Dungeons" Height="840" Width="1200"
         WindowStartupLocation="CenterScreen"
         Background="#121212" Foreground="#E0E0E0">
     <Window.DataContext>
@@ -56,6 +56,9 @@
                     <RadioButton Content="🏠  Home" Style="{StaticResource SidebarButtonStyle}" IsChecked="True"
                                  Command="{Binding NavigateCommand}" CommandParameter="Home"/>
 
+                    <RadioButton Content="🗂️  Floor History" Style="{StaticResource SidebarButtonStyle}"
+                                 Command="{Binding NavigateCommand}" CommandParameter="FloorHistory"/>
+
                     <RadioButton Content="📝  Log" Style="{StaticResource SidebarButtonStyle}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Log"/>
 
@@ -88,6 +91,10 @@
             <ContentControl.Resources>
                 <DataTemplate DataType="{x:Type viewmodels:HomeViewModel}">
                     <views:HomeView />
+                </DataTemplate>
+
+                <DataTemplate DataType="{x:Type viewmodels:FloorHistoryViewModel}">
+                    <views:FloorHistoryView />
                 </DataTemplate>
 
                 <DataTemplate DataType="{x:Type viewmodels:LogViewModel}">

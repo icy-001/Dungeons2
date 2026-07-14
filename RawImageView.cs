@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Windows.Media.Imaging;
 
 namespace Dungeons2
 {
@@ -94,6 +95,16 @@ namespace Dungeons2
                         (template.GetColor(x, y).A != 255 && GetColor(x + start_x, y + start_y) == color))
                         return false;
             return true;
+        }
+
+        public BitmapSource ToBitmapSource()
+        {
+            int stride = Width * sizeof(uint);
+            unsafe
+            {
+                fixed (uint* pPixels = Pixels)
+                    return BitmapSource.Create(Width, Height, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, (nint)pPixels, stride * Height, stride);
+            }
         }
 
         public static RawImageView FromFrame(FrameAccess frame) => new(frame.Map.AsSpan<uint>((int)frame.Map.DepthPitch / 4), (int)(frame.Map.RowPitch / 4), frame.Height);

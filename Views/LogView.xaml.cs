@@ -12,7 +12,9 @@ namespace Dungeons2.Views
         public LogView()
         {
             InitializeComponent();
-            LogTextBox.Text = string.Join(Environment.NewLine, LogService.Instance.Logs.Select(log => $"[{log.Item1:G}] {log.Item2}")) + Environment.NewLine;
+
+            LogTextBox.Text = string.Join(null, LogService.Instance.Logs.Select(log => $"[{log.Item1:G}] {log.Item2}\n"));
+            Loaded += (_, _) => LogTextBox.ScrollToEnd();
             LogService.Instance.OnLogReceived += HandleNewLog;
         }
 

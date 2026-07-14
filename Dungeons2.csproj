@@ -16,6 +16,8 @@
   <ItemGroup>
     <None Remove="Images\base_overlay.png" />
     <None Remove="Images\boss_overlay.png" />
+    <None Remove="Images\mystery.png" />
+    <None Remove="Images\unopened.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -62,10 +64,12 @@
     <EmbeddedResource Include="Images\highlighted_keys.png" />
     <EmbeddedResource Include="Images\hud_marker.png" />
     <EmbeddedResource Include="Images\keys.png" />
+    <EmbeddedResource Include="Images\mystery.png" />
     <EmbeddedResource Include="Images\rooms.png" />
     <EmbeddedResource Include="Images\map_marker.png" />
     <EmbeddedResource Include="Images\player_dots.png" />
     <EmbeddedResource Include="Images\skills.png" />
+    <EmbeddedResource Include="Images\unopened.png" />
     <EmbeddedResource Include="Images\winterface_marker.png" />
     <EmbeddedResource Include="Images\winterface_ready.png" />
   </ItemGroup>

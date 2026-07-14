@@ -14,6 +14,9 @@ namespace Dungeons2
     {
         public const int MapWidth = 280, MapHeight = 280;
         public const int KeybagOffsetX = 5, KeybagOffsetY = 52;
+        public const int MapKeyOffsetX = 3, MapKeyOffsetY = 6;
+        public const int HighlightedMapKeyOffsetX = 1, HighlightedMapKeyOffsetY = 2;
+        public const int SkillOffsetX = 1, SkillOffsetY = 2;
         public const int HudStartY = MapHeight;
         public const int KeybagPadding = 2;
         public const double MatchThreshold = 200;
@@ -68,15 +71,15 @@ namespace Dungeons2
 
         public readonly (Map, int) ReadMap()
         {
-            Map res = new();
+            Map res = new(8, 8);
             int roomcount = 0;
-            for (int x = 0; x < res.Rooms.GetLength(0); x++)
-                for (int y = 0; y < res.Rooms.GetLength(1); y++)
-                    res.Rooms[x, y] = new();
+            for (int x = 0; x < res.Rows; x++)
+                for (int y = 0; y < res.Cols; y++)
+                    res[x, y] = new();
             for (int i = 0; i < 8; ++i)
                 for (int j = 0; j < 8; ++j)
                 {
-                    ref Room currentRoom = ref res.Rooms[i, j];
+                    ref Room currentRoom = ref res[i, j];
 
                     int x = 12 + 32 * j, y = 12 + 32 * i;
                     uint[] sig = Registry.ComputeSignature(Image, x, y);
@@ -89,7 +92,7 @@ namespace Dungeons2
                             currentRoom.Opened = true;
                             ++roomcount;
 
-                            if (Image[x + 22, y + 13] == BaseColor)
+                            if (Image[x + 23, y + 13] == BaseColor)
                             {
                                 currentRoom.IsBase = true;
                                 res.Base = new(i, j);
@@ -107,14 +110,14 @@ namespace Dungeons2
                     {
                         for (int k = 0; k < 64; ++k)
                         {
-                            double dist = Image.MatchDistance(Registry.GetMapKey(k), x + 3, y + 6, MatchThreshold);
+                            double dist = Image.MatchDistance(Registry.GetMapKey(k), x + MapKeyOffsetX, y + MapKeyOffsetY, MatchThreshold);
                             if (dist < MatchThreshold)
                             {
                                 currentRoom.Lock = k;
                                 break;
                             }
 
-                            dist = Image.MatchDistance(Registry.GetHighlightedMapKey(k), x + 1, y + 2, MatchThreshold);
+                            dist = Image.MatchDistance(Registry.GetHighlightedMapKey(k), x + HighlightedMapKeyOffsetX, y + HighlightedMapKeyOffsetY, MatchThreshold);
                             if (dist < MatchThreshold)
                             {
                                 currentRoom.Lock = k;
@@ -126,7 +129,7 @@ namespace Dungeons2
                         {
                             for (int k = 0; k < Registry.SkillDoors.Length; ++k)
                             {
-                                double dist = Image.MatchDistance(Registry.GetSkillIcon(k), x + 1, y + 2, MatchThreshold);
+                                double dist = Image.MatchDistance(Registry.GetSkillIcon(k), x + SkillOffsetX, y + SkillOffsetY, MatchThreshold);
                                 if (dist < MatchThreshold)
                                 {
                                     currentRoom.SkillDoor = k;

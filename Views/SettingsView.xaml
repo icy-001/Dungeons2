@@ -1,8 +1,7 @@
 ﻿<UserControl x:Class="Dungeons2.Views.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Dungeons2"
-             Background="#121212" Foreground="#E0E0E0">
+             xmlns:local="clr-namespace:Dungeons2">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
     </UserControl.Resources>
@@ -23,7 +22,7 @@
                         <TextBlock Text="Auto-detect the map and HUD positions from the current game capture." Foreground="#888" Margin="0,0,0,12"/>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Content="Auto-detect" Background="#333" Foreground="White" BorderThickness="0" Padding="15,8" Click="AutoDetectCalibrationButton_Click"/>
-                            <TextBlock x:Name="CalibrationStatusText" Text="Not calibrated yet." Foreground="#AAA" Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="WrapWithOverflow" />
+                            <TextBlock x:Name="CalibrationStatusText" Foreground="#AAA" Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="WrapWithOverflow" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

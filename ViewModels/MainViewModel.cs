@@ -12,6 +12,7 @@ namespace Dungeons2.ViewModels
     public partial class MainViewModel : ObservableObject
     {
         private readonly HomeViewModel _homeViewModel = new();
+        private readonly FloorHistoryViewModel _floorHistoryViewModel = new();
         private readonly LogViewModel _logViewModel = new();
         private readonly SettingsViewModel _settingsViewModel = new();
 
@@ -50,6 +51,7 @@ namespace Dungeons2.ViewModels
             CurrentView = viewName switch
             {
                 "Home" => _homeViewModel,
+                "FloorHistory" => _floorHistoryViewModel,
                 "Log" => _logViewModel,
                 "Settings" => _settingsViewModel,
                 _ => CurrentView

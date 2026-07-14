@@ -2,6 +2,8 @@
 using Dungeons2.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -22,7 +24,7 @@ namespace Dungeons2
         /// <summary>
         /// Gets or sets the map representing the layout of the dungeon.
         /// </summary>
-        public Map Map { get; init; } = new();
+        public Map Map { get; set; } = new(8, 8);
 
         public bool IsActive { get; set; }
         [ObservableProperty]
@@ -52,8 +54,10 @@ namespace Dungeons2
             };
 
 #if DEBUG
-            FloorHistory.Add(new FloorData { FloorNumber = 1, Size = "Small", Time = TimeSpan.Parse("0:07:00"), Bonus = 1 });
-            FloorHistory.Add(new FloorData { FloorNumber = 15, Size = "Medium", Time = TimeSpan.Parse("1:03:05"), Bonus = 1 });
+            foreach (var line in File.ReadLines("floors.jsonl"))
+            {
+                FloorHistory.Add(JsonSerializer.Deserialize<FloorData>(line));
+            }
 #endif
         }
 
@@ -105,10 +109,15 @@ namespace Dungeons2
 
         public void UpdateAnnotatedMapImage()
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            int offX = 12, offY = 12;
+            DrawingVisual visual = new();
+            using (DrawingContext dc = visual.RenderOpen())
             {
-                AnnotatedMapRenderer.DrawMap(MapHudReader.MapWidth, MapHudReader.MapHeight, Map, AnnotatedMapImage);
-            });
+                dc.DrawRectangle(Brushes.Black, null, new(0, 0, MapHudReader.MapWidth, MapHudReader.MapHeight));
+                AnnotatedMapRenderer.DrawMap(dc, offX, offY, Map);
+                AnnotatedMapRenderer.DrawRoomTicks(dc, offX, offY, RoomTicks);
+            }
+            AnnotatedMapImage.Render(visual);
         }
     }
 }

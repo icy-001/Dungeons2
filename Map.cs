@@ -1,10 +1,21 @@
-﻿namespace Dungeons2
+﻿using System.Diagnostics;
+using System.Text.Json.Serialization;
+
+namespace Dungeons2
 {
     public class Map
     {
-        public Map() => Clear();
+        [JsonConstructor]
+        public Map(int rows, int cols)
+        {
+            Rows = rows;
+            Cols = cols;
+            Rooms = new Room[rows * cols];
+            for (int i = 0; i < Rooms.Length; ++i)
+                Rooms[i] = new();
+        }
 
-        public Map(Map original)
+        public Map(Map original) : this(original.Rows, original.Cols)
         {
             Array.Copy(original.Rooms, Rooms, Rooms.Length);
             Base = original.Base;
@@ -12,7 +23,9 @@
             original.PlayerLocations.CopyTo(PlayerLocations, 0);
         }
 
-        public Room[,] Rooms { get; } = new Room[8, 8];
+        public int Rows { get; }
+        public int Cols { get; }
+        public Room[] Rooms { get; }
         public Coord Base { get; set; } = Coord.Nothing;
         public Coord Boss { get; set; } = Coord.Nothing;
         public Coord?[] PlayerLocations { get; } = new Coord?[5];
@@ -21,13 +34,14 @@
         static readonly Directions[] SingleDirections = [Directions.W, Directions.E, Directions.S, Directions.N];
         static Registry Registry => Registry.Instance;
 
-        public void Clear()
+        public int Index(int row, int col)
         {
-            for (int i = 0; i < 8; i++)
-                for (int j = 0; j < 8; j++)
-                    Rooms[i, j] = new();
-            Array.Clear(PlayerLocations, 0, PlayerLocations.Length);
+            if (row < 0 || row >= Rows || col < 0 || col >= Cols)
+                throw new ArgumentOutOfRangeException(nameof(row), "Row or column is out of range.");
+            return row * Cols + col;
         }
+
+        public ref Room this[int row, int col] => ref Rooms[Index(row, col)];
 
         /// <summary>
         /// Merges this map with another and returns true if there was a change.
@@ -38,11 +52,11 @@
         {
             bool changed = false;
             List<Coord> newRoomLocations = [];
-            for (int r = 0; r < 8; r++)
-                for (int c = 0; c < 8; c++)
+            for (int r = 0; r < Rows; r++)
+                for (int c = 0; c < Cols; c++)
                 {
-                    ref var oldRoom = ref Rooms[r, c];
-                    ref var newRoom = ref other.Rooms[r, c];
+                    ref var oldRoom = ref this[r, c];
+                    ref var newRoom = ref other[r, c];
                     if (newRoom.Opened && !oldRoom.Opened)
                         newRoomLocations.Add(new Coord(r, c));
                     changed |= oldRoom.Merge(newRoom);
@@ -67,7 +81,7 @@
             if (Base == Coord.Nothing)
                 return;
 
-            bool[,] visited = new bool[8, 8];
+            bool[,] visited = new bool[Rows, Cols];
 
             void Visit(Coord c, Directions dir)
             {
@@ -75,9 +89,9 @@
                 if (visited[i, j])
                     return;
                 visited[i, j] = true;
-                Rooms[i, j].Parent = Flip(dir);
+                this[i, j].Parent = Flip(dir);
                 foreach (var d in SingleDirections)
-                    if (Rooms[i, j].Doors.HasFlag(d))
+                    if (this[i, j].Doors.HasFlag(d))
                         Visit(Add(c, d), d);
             }
 
@@ -87,19 +101,19 @@
         public IEnumerable<Room> Children(int i, int j)
         {
             foreach (var d in SingleDirections)
-                if (Rooms[i, j].Doors.HasFlag(d) && Rooms[i, j].Parent != d)
+                if (this[i, j].Doors.HasFlag(d) && this[i, j].Parent != d)
                 {
                     var (ii, jj) = Add(new(i, j), d);
-                    yield return Rooms[ii, jj];
+                    yield return this[ii, jj];
                 }
         }
 
         public int DeadEndCount()
         {
             int count = 0;
-            for (int r = 0; r < 8; r++)
-                for (int c = 0; c < 8; c++)
-                    if (Rooms[r, c].IsDeadEnd)
+            for (int r = 0; r < Rows; r++)
+                for (int c = 0; c < Cols; c++)
+                    if (this[r, c].IsDeadEnd)
                         ++count;
             return count;
         }
@@ -110,16 +124,18 @@
         /// <returns>Returns pair (dewks, denks).</returns>
         public (int Dewks, int Denks) DeadEndCountExtended()
         {
+            Debug.Assert(PlayerCount == 1, "DeadEndCountExtended only works for solos.");
             int dewks = 0, denks = 0;
-            for (int r = 0; r < 8; r++)
-                for (int c = 0; c < 8; c++)
+            for (int r = 0; r < Rows; r++)
+                for (int c = 0; c < Cols; c++)
                 {
-                    var room = Rooms[r, c];
+                    var room = this[r, c];
                     if (room.IsDeadEnd)
                     {
                         if (room.Key == -1)
                             ++denks;
-                        else ++dewks;
+                        else
+                            ++dewks;
                     }
                 }
             return (dewks, denks);
@@ -128,9 +144,19 @@
         public int PossiblePuzzleCount()
         {
             int res = 0;
-            for (int i = 0; i < 8; i++)
-                for (int j = 0; j < 8; j++)
-                    if (Rooms[i, j].Opened && !Rooms[i, j].IsDeadEnd && Children(i, j).All(r => r.Lock == -1))
+            for (int i = 0; i < Rows; i++)
+                for (int j = 0; j < Cols; j++)
+                    if (this[i, j].Opened && !this[i, j].IsDeadEnd && Children(i, j).All(r => r.Lock == -1))
+                        ++res;
+            return res;
+        }
+
+        public int KeyCount()
+        {
+            int res = 0;
+            for (int i = 0; i < Rows; i++)
+                for (int j = 0; j < Cols; j++)
+                    if (this[i, j].Lock != -1)
                         ++res;
             return res;
         }
@@ -138,11 +164,11 @@
         public (int Count, int Ticks) SkillDoorStats()
         {
             int count = 0, ticks = 0;
-            for (int i = 0; i < 8; i++)
-                for (int j = 0; j < 8; j++)
-                    if (Rooms[i, j].Opened && Rooms[i, j].SkillDoor != -1)
+            for (int i = 0; i < Rows; i++)
+                for (int j = 0; j < Cols; j++)
+                    if (this[i, j].Opened && this[i, j].SkillDoor != -1)
                     {
-                        var entry = Registry.SkillDoors[Rooms[i, j].SkillDoor];
+                        var entry = Registry.SkillDoors[this[i, j].SkillDoor];
                         ++count;
                         ticks += entry.Ticks;
                     }

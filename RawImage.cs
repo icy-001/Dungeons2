@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Windows.Media.Imaging;
 
 namespace Dungeons2
 {
@@ -15,5 +16,7 @@ namespace Dungeons2
         public Color GetColor(int x, int y) => Color.FromArgb((int)this[x, y]);
 
         public int GetPixelIndex(int x, int y) => y * Width + x;
+
+        public BitmapSource ToBitmapSource() => BitmapSource.Create(Width, Height, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, Pixels, Width * sizeof(uint));
     }
 }

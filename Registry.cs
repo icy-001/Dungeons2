@@ -22,6 +22,8 @@ namespace Dungeons2
         public readonly uint[][] HighlightedKeys = new uint[64][];
         public readonly BitmapSource[] RoomBitmaps = new BitmapSource[16];
         public readonly uint[][] RoomSignatures = new uint[16][];
+        public readonly BitmapSource[] MysteryBitmaps = new BitmapSource[4];
+        public readonly BitmapSource[] UnopenedBitmaps = new BitmapSource[4];
 
         public const int MapMarkerWidth = 15, MapMarkerHeight = 15;
         public RawImage MapMarker { get; private set; } = new();
@@ -31,6 +33,7 @@ namespace Dungeons2
         public RawImage WinterfaceReady { get; private set; } = new();
 
         public readonly uint[][] PlayerDots = new uint[5][];
+        public readonly BitmapSource[] PlayerDotBitmaps = new BitmapSource[5];
         public const int PlayerDotWidth = 9, PlayerDotHeight = 9;
         public readonly PointInt32[] PlayerDotOffsets =
         [
@@ -93,8 +96,23 @@ namespace Dungeons2
                     var bitmap = BitmapSource.Create(32, 32, 96, 96, PixelFormats.Bgra32, null, rooms[i], 32 * 4);
                     bitmap.Freeze();
                     RoomBitmaps[i] = bitmap;
-
                     RoomSignatures[i] = ComputeSignature(new(rooms[i], 32, 32));
+                }
+
+                uint[][] mystery = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.mystery.png", 1, 4, 32, 32);
+                for (int i = 0; i < 4; ++i)
+                {
+                    var bitmap = BitmapSource.Create(32, 32, 96, 96, PixelFormats.Bgra32, null, mystery[i], 32 * 4);
+                    bitmap.Freeze();
+                    MysteryBitmaps[i] = bitmap;
+                }
+
+                uint[][] unopened = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.unopened.png", 1, 4, 32, 32);
+                for (int i = 0; i < 4; ++i)
+                {
+                    var bitmap = BitmapSource.Create(32, 32, 96, 96, PixelFormats.Bgra32, null, unopened[i], 32 * 4);
+                    bitmap.Freeze();
+                    UnopenedBitmaps[i] = bitmap;
                 }
 
                 MapMarker = SpriteLoader.LoadSprite("Dungeons2.Images.map_marker.png");
@@ -103,6 +121,12 @@ namespace Dungeons2
                 HudMarker = SpriteLoader.LoadSprite("Dungeons2.Images.hud_marker.png");
 
                 SpriteLoader.LoadSpriteSheet("Dungeons2.Images.player_dots.png", 1, 5, PlayerDotWidth, PlayerDotHeight).CopyTo(PlayerDots, 0);
+                for (int i = 0; i < PlayerDots.Length; ++i)
+                {
+                    var bitmap = BitmapSource.Create(PlayerDotWidth, PlayerDotHeight, 96, 96, PixelFormats.Bgra32, null, PlayerDots[i], PlayerDotWidth * 4);
+                    bitmap.Freeze();
+                    PlayerDotBitmaps[i] = bitmap;
+                }
                 SpriteLoader.LoadSpriteSheet("Dungeons2.Images.highlighted_keys.png", 8, 8, HighlightedKeyWidth, HighlightedKeyHeight).CopyTo(HighlightedKeys, 0);
 
                 uint[][] skillIcons = SpriteLoader.LoadSpriteSheet("Dungeons2.Images.skills.png", 1, 18, HighlightedKeyWidth, HighlightedKeyHeight);
@@ -141,6 +165,11 @@ namespace Dungeons2
                 image[offX + 6, offY + 8],
                 image[offX + 7, offY + 8]
             ];
+        }
+
+        public static SolidColorBrush GetTicksBrush(int ticks)
+        {
+            return ticks < 10 ? Brushes.Lime : ticks < 20 ? Brushes.Yellow : Brushes.Red;
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Dungeons2
 
         public readonly Color GetColor(int x, int y) => Image.GetColor(x, y);
 
-        public bool HasWinterface() => Image.IsExactMatch(Registry.WinterfaceMarker, 0, 0) && Image.IsExactMatch(Registry.WinterfaceReady, 334, 299);
+        public bool HasWinterface() => Image.IsExactMatch(Registry.WinterfaceMarker, 0, 0);
 
         public string ReadField(Field field)
         {
