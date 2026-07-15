@@ -51,7 +51,6 @@ namespace Dungeons2
                 });
             };
 
-#if DEBUG
             if (System.IO.File.Exists("floors.jsonl"))
                 foreach (string line in System.IO.File.ReadLines("floors.jsonl"))
                 {
@@ -59,7 +58,6 @@ namespace Dungeons2
                     if (floorData is not null)
                         FloorHistory.Add(floorData);
                 }
-#endif
         }
 
         public void UpdateMapImage(RawImageView image)

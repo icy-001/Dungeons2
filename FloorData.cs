@@ -46,6 +46,8 @@ namespace Dungeons2
             get
             {
                 RenderTargetBitmap res = new(MapHudReader.MapWidth, MapHudReader.MapHeight, 96, 96, PixelFormats.Pbgra32);
+                if (Map is null)
+                    return res;
                 const int offX = 12, offY = 12;
                 DrawingVisual visual = new();
                 using (var dc = visual.RenderOpen())
