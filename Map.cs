@@ -217,7 +217,7 @@ namespace Dungeons2
             Stack<int> criticalKeys = [];
             void MakeCritical(Coord pos)
             {
-                for (; !res[pos.Row, pos.Col]; pos = Add(pos, this[pos.Row, pos.Col].Parent))
+                for (; !res[pos.Row, pos.Col] && this[pos.Row, pos.Col].Parent != Directions.None; pos = Add(pos, this[pos.Row, pos.Col].Parent))
                 {
                     res[pos.Row, pos.Col] = true;
                     if (this[pos.Row, pos.Col].Lock != -1)

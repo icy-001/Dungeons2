@@ -13,9 +13,14 @@ namespace Dungeons2
         public const int MapKeyWidth = 24, MapKeyHeight = 24;
         public const int HighlightedKeyWidth = 29, HighlightedKeyHeight = 29;
         public const int KeybagPadding = 2;
+        public const int MapMarkerWidth = 15, MapMarkerHeight = 15;
+        public const int WinterfaceMarkerWidth = 56, WinterfaceMarkerHeight = 10;
+        public const int PlayerDotWidth = 9, PlayerDotHeight = 9;
+        public static readonly PointInt32 RoomTickOffset = new(4, 18);
+        public static readonly PointInt32[] PlayerDotOffsets = [new(7, 2), new(21, 2), new(14, 9), new(7, 16), new(21, 16)];
 
-        public readonly string[] Colors = ["o", "s", "y", "gr", "b", "p", "c", "go"];
-        public readonly string[] Shapes = ["t", "d", "r", "p", "co", "cr", "w", "s"];
+        public static readonly string[] Colors = ["o", "s", "y", "gr", "b", "p", "c", "go"];
+        public static readonly string[] Shapes = ["t", "d", "r", "p", "co", "cr", "w", "s"];
 
         public readonly uint[][] MapKeys = new uint[64][];
         public readonly uint[][] KeybagKeys = new uint[64][];
@@ -26,20 +31,13 @@ namespace Dungeons2
         public readonly BitmapSource[] MysteryBitmaps = new BitmapSource[4];
         public readonly BitmapSource[] UnopenedBitmaps = new BitmapSource[4];
 
-        public const int MapMarkerWidth = 15, MapMarkerHeight = 15;
         public RawImage MapMarker { get; private set; } = new();
 
-        public const int WinterfaceMarkerWidth = 56, WinterfaceMarkerHeight = 10;
         public RawImage WinterfaceMarker { get; private set; } = new();
         public RawImage WinterfaceReady { get; private set; } = new();
 
         public readonly uint[][] PlayerDots = new uint[5][];
         public readonly BitmapSource[] PlayerDotBitmaps = new BitmapSource[5];
-        public const int PlayerDotWidth = 9, PlayerDotHeight = 9;
-        public readonly PointInt32[] PlayerDotOffsets =
-        [
-            new(7, 2), new(21, 2), new(14, 9), new(7, 16), new(21, 16)
-        ];
 
         public RawImage HudMarker { get; private set; } = new();
         public BitmapSource? BaseOverlayBitmap { get; private set; }

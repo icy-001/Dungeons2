@@ -44,14 +44,21 @@ namespace Dungeons2.Services
                     DoCapture();
             }
             catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                File.AppendAllText("errors.log", $"[{DateTimeOffset.Now:G}] {e.Message}\n");
+                throw;
+            }
         }
 
         void DoCapture()
         {
             if (!GameCapture.Instance.IsActive)
                 return;
-
             using var keybagFrame = GameCapture.CaptureMapKeybag();
+            if (keybagFrame.Width == 0 || keybagFrame.Height == 0)
+                return;
+
             var mapKeybagImage = RawImageView.FromFrame(keybagFrame);
             MapHudReader reader = new(mapKeybagImage);
 
@@ -71,7 +78,7 @@ namespace Dungeons2.Services
                         DungeonStore.KeyMask = 0;
                         DungeonStore.IsActive = false;
                         int floorEndTicks = (int)(DungeonStore.RoomStopwatch.Elapsed.TotalMilliseconds / 600);
-                        DungeonStore.RoomTicks.Add(new(-1, -1, floorEndTicks));
+                        DungeonStore.AddRoomTick(new(-1, -1, floorEndTicks));
                         LogService.Instance.Log($"Ending floor took {floorEndTicks} ticks ({floorEndTicks * 0.6:F1} s)");
                     }
                     if (!string.IsNullOrEmpty(winterfaceReader.ReadField(Field.FinalXP)))
@@ -107,7 +114,7 @@ namespace Dungeons2.Services
                 if (DungeonStore.RoomCount == 0)
                 {
                     if (newRoomCount == 1)
-                        DungeonStore.RoomTicks.Add(new(DungeonStore.Map.Base.Row, DungeonStore.Map.Base.Col, 0));
+                        DungeonStore.AddRoomTick(new(DungeonStore.Map.Base.Row, DungeonStore.Map.Base.Col, 0));
                     else
                         DungeonStore.IsPartial = true;
                 }
@@ -116,7 +123,7 @@ namespace Dungeons2.Services
                 if (newRoomCount > 1)
                     foreach (var (i, j) in newRoomLocations)
                     {
-                        DungeonStore.RoomTicks.Add(new(i, j, ticks));
+                        DungeonStore.AddRoomTick(new(i, j, ticks));
                         LogService.Instance.Log($"Room {DungeonStore.RoomTicks.Count} took {ticks} ticks ({ticks * 0.6:F1} s)");
                         ticks = 0;  // Rooms opened simultaneously are considered to have taken 0 ticks after the first one.
                     }
@@ -125,13 +132,14 @@ namespace Dungeons2.Services
             // Since the 2026/7/6 update we can now track key locations in solos accurately.
             if (keymaskDelta != 0 && DungeonStore.Map.PlayerCount == 1 && !DungeonStore.IsPartial)
             {
-                var loc = DungeonStore.Map.PlayerLocations[0]!.Value;
-                for (int k = 0; k < 64; ++k)
-                    if ((keymaskDelta & 1UL << k) != 0)
-                    {
-                        LogService.Instance.Log($"Found key {Registry.Instance.GetKeyName(k)} in {loc.ToChessString()}");
-                        DungeonStore.Map[loc.Row, loc.Col].Key = k;
-                    }
+                var o = DungeonStore.Map.PlayerLocations[0];
+                if (o.HasValue)
+                    for (int k = 0; k < 64; ++k)
+                        if ((keymaskDelta & 1UL << k) != 0)
+                        {
+                            LogService.Instance.Log($"Found key {Registry.Instance.GetKeyName(k)} in {o.Value.ToChessString()}");
+                            DungeonStore.Map[o.Value.Row, o.Value.Col].Key = k;
+                        }
             }
             if (changed)
             {
@@ -189,12 +197,19 @@ namespace Dungeons2.Services
 
             LogService.Instance.Log($"Floor {DungeonStore.FloorCounter} time={floorData.Time} | key count={BitOperations.PopCount(DungeonStore.KeyMask)}");
 
-            // Background file writing
-            File.AppendAllText("floors.txt", floorData.ToTabSeparatedString());
-            File.AppendAllText("floors.jsonl", floorData.ToJsonString() + Environment.NewLine);
-            ImageWriter.SaveToPng(DungeonStore.MapImage, $"{Settings.Instance.MapSaveLocation}\\{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png");
-            RawImage raw = new(reader.Image.Pixels.ToArray(), reader.Image.Width, reader.Image.Height);
-            ImageWriter.SaveCroppedToPng(raw, $"{Settings.Instance.WinterfaceSaveLocation}\\{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png", 0, 0, WinterfaceReader.WinterfaceWidth, WinterfaceReader.WinterfaceHeight);
+            try
+            {
+                // Write floor log, and save map/winterface images.
+                File.AppendAllText("floors.txt", floorData.ToTabSeparatedString());
+                File.AppendAllText("floors.jsonl", floorData.ToJsonString() + Environment.NewLine);
+                ImageWriter.SaveToPng(DungeonStore.MapImage, $"{Settings.Instance.MapSaveLocation}\\{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png");
+                RawImage raw = new(reader.Image.Pixels.ToArray(), reader.Image.Width, reader.Image.Height);
+                ImageWriter.SaveCroppedToPng(raw, $"{Settings.Instance.WinterfaceSaveLocation}\\{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png", 0, 0, WinterfaceReader.WinterfaceWidth, WinterfaceReader.WinterfaceHeight);
+            }
+            catch (IOException e)
+            {
+                LogService.Instance.Log("Error writing floor log to file or saving map/winterface images: " + e.Message);
+            }
             // Notify the ViewModel
             OnFloorCompleted?.Invoke(floorData);
         }

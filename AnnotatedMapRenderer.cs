@@ -81,7 +81,7 @@ namespace Dungeons2
                     brush,
                     1.0);
 
-                dc.DrawText(text, new Point(x + 4, y + 18));
+                dc.DrawText(text, new Point(x + Registry.RoomTickOffset.X, y + Registry.RoomTickOffset.Y));
             }
         }
     }

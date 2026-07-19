@@ -3,6 +3,7 @@ using Dungeons2.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -37,18 +38,18 @@ namespace Dungeons2
         public RenderTargetBitmap AnnotatedMapImage { get; set; } = new(MapHudReader.MapWidth, MapHudReader.MapHeight, 96, 96, PixelFormats.Pbgra32);
         public int FloorCounter { get; set; }
         public int RoomCount { get; set; }
+        private readonly object _roomTicksLock = new();
         public ObservableCollection<RoomSplit> RoomTicks { get; } = [];
         public Stopwatch RoomStopwatch { get; } = new();
+        private readonly object _floorHistoryLock = new();
         public ObservableCollection<FloorData> FloorHistory { get; } = [];
 
         private DungeonStore()
         {
             MapCaptureService.Instance.OnFloorCompleted += (floorData) =>
             {
-                Application.Current.Dispatcher.InvokeAsync(() =>
-                {
+                lock (_floorHistoryLock)
                     FloorHistory.Add(floorData);
-                });
             };
 
             if (System.IO.File.Exists("floors.jsonl"))
@@ -58,6 +59,9 @@ namespace Dungeons2
                     if (floorData is not null)
                         FloorHistory.Add(floorData);
                 }
+
+            BindingOperations.EnableCollectionSynchronization(RoomTicks, _roomTicksLock);
+            BindingOperations.EnableCollectionSynchronization(FloorHistory, _floorHistoryLock);
         }
 
         public void UpdateMapImage(RawImageView image)
@@ -117,6 +121,12 @@ namespace Dungeons2
                 AnnotatedMapRenderer.DrawRoomTicks(dc, offX, offY, RoomTicks);
             }
             AnnotatedMapImage.Render(visual);
+        }
+
+        public void AddRoomTick(RoomSplit split)
+        {
+            lock (_roomTicksLock)
+                RoomTicks.Add(split);
         }
     }
 }

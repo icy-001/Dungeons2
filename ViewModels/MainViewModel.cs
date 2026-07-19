@@ -72,13 +72,18 @@ namespace Dungeons2.ViewModels
                 {
                     if (SelectedProcess == AvailableProcesses[i])
                         SelectedProcess = null;
+                    AvailableProcesses[i].Dispose();
                     AvailableProcesses.RemoveAt(i);
                 }
             }
 
             foreach (var proc in currentProcesses)
+            {
                 if (!AvailableProcesses.Any(w => w.Handle == proc.MainWindowHandle))
                     AvailableProcesses.Add(new ProcessWindow(proc));
+                else
+                    proc.Dispose();
+            }
 
             if (SelectedProcess is null && AvailableProcesses.Count > 0)
                 SelectedProcess = AvailableProcesses[0];

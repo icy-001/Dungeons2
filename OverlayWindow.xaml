@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="Overlay" Height="400" Width="280" Topmost="True" WindowStyle="None" AllowsTransparency="True" BorderThickness="1" Background="Transparent"  ShowInTaskbar="False">
     <StackPanel>
-        <Canvas x:Name="HighlightCanvas" 
+        <Canvas x:Name="OverlayCanvas" 
                 HorizontalAlignment="Stretch" 
                 VerticalAlignment="Stretch" 
                 IsHitTestVisible="False" Height="280" Width="280" />

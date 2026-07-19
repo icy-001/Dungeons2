@@ -53,21 +53,15 @@ namespace Dungeons2.Services
             int row = Settings.Instance.SpreadsheetStartRow;
             // 1. Read ONLY Column B to find how many rows are occupied
             string readRange = $"{column}{row}:{column}";
-            var getRequest = sheetsService.Spreadsheets.Values.Get(spreadsheetId, readRange);
-            var getResponse = await getRequest.ExecuteAsync();
-
-            // Calculate the next empty row in Column B
-            int nextEmptyRow = (getResponse.Values?.Count ?? 0) + row;
-
-            // 2. Use UPDATE to write exactly to that specific cell
-            string exactUpdateRange = $"{column}{nextEmptyRow}";
-
-            var updateRequest = sheetsService.Spreadsheets.Values.Update(
-                new ValueRange { Values = [[floor.Time]] }, spreadsheetId, exactUpdateRange);
-            updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-
             try
             {
+                var getRequest = sheetsService.Spreadsheets.Values.Get(spreadsheetId, readRange);
+                var getResponse = await getRequest.ExecuteAsync();
+                int nextEmptyRow = (getResponse.Values?.Count ?? 0) + row;
+                var updateRequest = sheetsService.Spreadsheets.Values.Update(
+                    new ValueRange { Values = [[floor.Time]] }, spreadsheetId, $"{column}{nextEmptyRow}");
+                updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+
                 var response = await updateRequest.ExecuteAsync();
                 LogService.Instance.Log($"Data added to range: {response.UpdatedRange}");
             }

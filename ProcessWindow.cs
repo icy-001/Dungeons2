@@ -3,13 +3,15 @@ using System.Drawing;
 
 namespace Dungeons2
 {
-    public class ProcessWindow(Process process) : IEquatable<ProcessWindow>
+    public class ProcessWindow : IEquatable<ProcessWindow>, IDisposable
     {
-        public Process Process { get; } = process;
+        public Process Process { get; }
         public bool HasExited => Process?.HasExited ?? false;
         public IntPtr Handle => Process?.MainWindowHandle ?? IntPtr.Zero;
         public string Title => Process?.MainWindowTitle ?? "Entire screen";
         public Size Size => Interop.User32.GetClientRect(Handle, out var rect) ? new Size(rect.Right - rect.Left, rect.Bottom - rect.Top) : Size.Empty;
+
+        public ProcessWindow(Process process) => Process = process;
 
         public bool Equals(ProcessWindow? other) => Process?.Id == other?.Process?.Id;
 
@@ -26,5 +28,11 @@ namespace Dungeons2
         public static bool operator ==(ProcessWindow? left, ProcessWindow? right) => left?.Equals(right) ?? (right is null);
 
         public static bool operator !=(ProcessWindow? left, ProcessWindow? right) => !(left == right);
+
+        public void Dispose()
+        {
+            Process?.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }

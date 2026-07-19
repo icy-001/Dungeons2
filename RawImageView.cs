@@ -53,7 +53,7 @@ namespace Dungeons2
                 }
             }
 
-            return (double)total / count;
+            return count == 0 ? 0 : (double)total / count;
         }
 
         public bool IsExactMatch(RawImageView template, int start_x, int start_y)

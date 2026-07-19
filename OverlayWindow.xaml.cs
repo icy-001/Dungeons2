@@ -19,7 +19,6 @@ namespace Dungeons2
         private IntPtr hwnd;
         private readonly DispatcherTimer trackerTimer;
         private readonly Rectangle?[,] activeRects = new Rectangle?[8, 8];
-        private ulong currentKeyMask;
         private readonly DoubleAnimation opacityAnimation = new()
         {
             From = HighlightOpacity,
@@ -29,6 +28,8 @@ namespace Dungeons2
             RepeatBehavior = new RepeatBehavior(6),
             EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
         };
+        private ulong currentKeyMask;
+        private int currentRoomCount;
 
         public OverlayWindow()
         {
@@ -41,63 +42,11 @@ namespace Dungeons2
                 UpdateText();
             };
 
-            MapCaptureService.Instance.OnNewFloor += () => Dispatcher.InvokeAsync(ClearRects);
-            MapCaptureService.Instance.OnMapChanged += () => Dispatcher.InvokeAsync(Update);
+            MapCaptureService.Instance.OnNewFloor += () => Dispatcher.InvokeAsync(OnNewFloor);
+            MapCaptureService.Instance.OnMapChanged += () => Dispatcher.InvokeAsync(OnMapChanged);
         }
 
         static DungeonStore DungeonStore => DungeonStore.Instance;
-
-        /// <summary>
-        /// Updates the overlay window. Must be called from UI thread.
-        /// </summary>
-        public void Update()
-        {
-            //string keys = string.Empty;
-            //for (int k = 0; k < 64; ++k)
-            //    if ((DungeonStore.KeyMask & (1UL << k)) != 0) keys += Registry.GetKeyName(k) + " ";
-            //Debug.WriteLine("current keys = " + keys);
-            for (int i = 0; i < 8; ++i)
-                for (int j = 0; j < 8; ++j)
-                {
-                    int key = DungeonStore.Map[i, j].Lock;
-                    bool unlockable = key >= 0 && key < 64 && (DungeonStore.KeyMask & (1UL << key)) != 0 && !DungeonStore.Map[i, j].Opened;
-                    if (unlockable && activeRects[i, j] is null)
-                    {
-                        var rect = new Rectangle
-                        {
-                            Width = 26,
-                            Height = 26,
-                            Fill = new SolidColorBrush(Colors.White) { Opacity = HighlightOpacity },
-                            Stroke = Brushes.White
-                        };
-                        Canvas.SetLeft(rect, 14 + 32 * j);
-                        Canvas.SetTop(rect, 15 + 32 * i);
-                        activeRects[i, j] = rect;
-                        _ = HighlightCanvas.Children.Add(rect);
-
-                        // Only flash if update is due to key found.
-                        if ((currentKeyMask & (1UL << key)) == 0)
-                            rect.Fill.BeginAnimation(Brush.OpacityProperty, opacityAnimation);
-                    }
-                    else if (!unlockable && activeRects[i, j] is not null)
-                    {
-                        HighlightCanvas.Children.Remove(activeRects[i, j]);
-                        activeRects[i, j] = null;
-                    }
-                }
-            currentKeyMask = DungeonStore.KeyMask;
-        }
-
-        public void ClearRects()
-        {
-            for (int i = 0; i < 8; ++i)
-                for (int j = 0; j < 8; ++j)
-                    if (activeRects[i, j] is not null)
-                    {
-                        HighlightCanvas.Children.Remove(activeRects[i, j]);
-                        activeRects[i, j] = null;
-                    }
-        }
 
         protected override void OnSourceInitialized(EventArgs e)
         {
@@ -108,7 +57,7 @@ namespace Dungeons2
             _ = User32.SetWindowLongPtr(hwnd, User32.GWL_EXSTYLE, exStyle | User32.WS_EX_TRANSPARENT);
 
             trackerTimer.Start();
-            Update();
+            OnMapChanged();
         }
 
         protected override void OnClosed(EventArgs e)
@@ -116,6 +65,16 @@ namespace Dungeons2
             trackerTimer.Stop();
 
             base.OnClosed(e);
+        }
+
+        private void OnNewFloor()
+        {
+            OverlayCanvas.Children.Clear();
+            for (int i = 0; i < 8; ++i)
+                for (int j = 0; j < 8; ++j)
+                    activeRects[i, j] = null;
+            currentKeyMask = 0;
+            currentRoomCount = 0;
         }
 
         /// <summary>
@@ -182,6 +141,69 @@ namespace Dungeons2
             RpmRun.Text = $"{rpm,2:F1}";
             RpmRun.Foreground = RpmRatioToBrush(ratio);
             HistoryRun.Text = string.Join(" • ", from x in DungeonStore.RoomTicks.TakeLast(4) select x.Ticks.ToString().PadLeft(2));
+        }
+
+        /// <summary>
+        /// Updates the overlay window. Must be called from UI thread.
+        /// </summary>
+        private void OnMapChanged()
+        {
+            //string keys = string.Empty;
+            //for (int k = 0; k < 64; ++k)
+            //    if ((DungeonStore.KeyMask & (1UL << k)) != 0) keys += Registry.GetKeyName(k) + " ";
+            //Debug.WriteLine("current keys = " + keys);
+            for (int i = 0; i < 8; ++i)
+                for (int j = 0; j < 8; ++j)
+                {
+                    int key = DungeonStore.Map[i, j].Lock;
+                    bool unlockable = key >= 0 && key < 64 && (DungeonStore.KeyMask & (1UL << key)) != 0 && !DungeonStore.Map[i, j].Opened;
+                    if (unlockable && activeRects[i, j] is null)
+                    {
+                        var rect = new Rectangle
+                        {
+                            Width = 26,
+                            Height = 26,
+                            Fill = new SolidColorBrush(Colors.White) { Opacity = HighlightOpacity },
+                            Stroke = Brushes.White
+                        };
+                        Canvas.SetLeft(rect, 14 + 32 * j);
+                        Canvas.SetTop(rect, 15 + 32 * i);
+                        activeRects[i, j] = rect;
+                        _ = OverlayCanvas.Children.Add(rect);
+
+                        // Only flash if update is due to key found.
+                        if ((currentKeyMask & (1UL << key)) == 0)
+                            rect.Fill.BeginAnimation(Brush.OpacityProperty, opacityAnimation);
+                    }
+                    else if (!unlockable && activeRects[i, j] is not null)
+                    {
+                        OverlayCanvas.Children.Remove(activeRects[i, j]);
+                        activeRects[i, j] = null;
+                    }
+                }
+            currentKeyMask = DungeonStore.KeyMask;
+
+            // Only draw slow rooms
+            if (DungeonStore.RoomCount > currentRoomCount)
+            {
+                for (; currentRoomCount < DungeonStore.RoomCount; ++currentRoomCount)
+                {
+                    var (i, j, ticks) = DungeonStore.RoomTicks[currentRoomCount];
+                    if (i < 0 || j < 0 || ticks < 20)
+                        continue;
+                    var textBlock = new TextBlock
+                    {
+                        Text = ticks.ToString(),
+                        Foreground = Brushes.Red,
+                        FontFamily = new FontFamily("Cascadia Code"),
+                        FontSize = 10,
+                        FontWeight = FontWeights.Bold
+                    };
+                    Canvas.SetLeft(textBlock, 12 + 32 * j + Registry.RoomTickOffset.X);
+                    Canvas.SetTop(textBlock, 12 + 32 * i + Registry.RoomTickOffset.Y);
+                    _ = OverlayCanvas.Children.Add(textBlock);
+                }
+            }
         }
 
         static SolidColorBrush RpmRatioToBrush(double ratio)
