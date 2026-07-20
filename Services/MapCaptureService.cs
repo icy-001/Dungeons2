@@ -182,7 +182,6 @@ namespace Dungeons2.Services
             var floorData = reader.Read();
             floorData.Id = DungeonStore.FloorCounter;
             floorData.Timestamp = DungeonStore.LastActiveTime;
-            floorData.TeamSize = DungeonStore.Map.PlayerCount;
             floorData.RoomCount = DungeonStore.RoomCount;
             floorData.DeadEnds = DungeonStore.Map.DeadEndCount();
             floorData.SkillDoors = skillCount;
@@ -194,6 +193,8 @@ namespace Dungeons2.Services
             floorData.MapImage = DungeonStore.MapImage.Clone();
             floorData.MapImage.Freeze();
             floorData.RoomTicks = [.. DungeonStore.RoomTicks];
+            if (floorData.PartySize == 0)
+                floorData.PartySize = DungeonStore.Map.PlayerCount;
 
             LogService.Instance.Log($"Floor {DungeonStore.FloorCounter} time={floorData.Time} | key count={BitOperations.PopCount(DungeonStore.KeyMask)}");
 

@@ -14,6 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Fonts\Base\wide_colon.png" />
     <None Remove="Images\base_overlay.png" />
     <None Remove="Images\boss_overlay.png" />
     <None Remove="Images\mystery.png" />
@@ -35,6 +36,7 @@
     <EmbeddedResource Include="Fonts\Base\7.png" />
     <EmbeddedResource Include="Fonts\Base\8.png" />
     <EmbeddedResource Include="Fonts\Base\9.png" />
+    <EmbeddedResource Include="Fonts\Base\wide_colon.png" />
     <EmbeddedResource Include="Fonts\Large\0.png" />
     <EmbeddedResource Include="Fonts\Large\1.png" />
     <EmbeddedResource Include="Fonts\Large\2.png" />

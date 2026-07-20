@@ -14,7 +14,7 @@ namespace Dungeons2
 
         public int Id { get; set; }
         public DateTimeOffset Timestamp { get; set; }
-        public int TeamSize { get; set; } = 1;
+        public int PartySize { get; set; }
         public string Teammates { get; set; } = string.Empty;
         public int FloorNumber { get; set; } = 1;
         public TimeSpan Time { get; set; } = TimeSpan.Zero;
@@ -62,7 +62,7 @@ namespace Dungeons2
         }
 
         [JsonIgnore]
-        public string TeamSizeLabel => TeamSize switch
+        public string PartySizeLabel => PartySize switch
         {
             1 => "Solo",
             2 => "Duo",
@@ -73,7 +73,7 @@ namespace Dungeons2
         };
 
         [JsonIgnore]
-        public bool IsSolo => TeamSize == 1;
+        public bool IsSolo => PartySize == 1;
 
         public string ToTabSeparatedString() => $"{Id}\t{Timestamp:G}\t{Teammates}\t{FloorNumber}\t{Size}\t{Time}\t{Bonus}\t{MobsKilledMod}\t{Boost}\t{TotalMod}\t{TotalXP}\t{RoomCount}\t{DeadEnds}\t{SkillDoors}\t{SkillDoorTicks}\t{PossiblePuzzleRooms}\t{Notes}\n";
 

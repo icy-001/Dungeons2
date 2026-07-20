@@ -27,30 +27,13 @@ namespace Dungeons2
             while (true)
             {
                 bool found = false;
-                for (int i = 0; i < field.FontType.NumberImageList.Count; i++)
+                foreach (var (c, img) in field.FontType.Characters)
                 {
-                    var numberImage = field.FontType.NumberImageList[i];
-                    if (Image.IsMatchAlphaColor(numberImage, x, field.Y, field.ForeColor))
+                    if (Image.IsMatchAlphaColor(img, x, field.Y, field.ForeColor))
                     {
                         found = true;
-                        if (i <= 9)
-                        {
-                            _ = sb.Append(i);
-                        }
-                        else if (i == 10)   // Plus if small, comma if large. Ignore commas.
-                        {
-                            if (field.FontType == FontType.SmallFont)
-                                _ = sb.Append('+');
-                        }
-                        else if (i == 11)   // Minus
-                        {
-                            _ = sb.Append('-');
-                        }
-                        else if (i == 12)   // Colon
-                        {
-                            _ = sb.Append(':');
-                        }
-                        x += numberImage.Width;
+                        sb.Append(c);
+                        x += img.Width;
                         break;
                     }
                 }
@@ -94,9 +77,12 @@ namespace Dungeons2
             string floorSizeMod = ReadField(Field.SizeMod);
             string size = floorSizeMod == "+500" ? "Large" : floorSizeMod == "+250" ? "Medium" : "Small";
             int bonusField = ParseInt(ReadField(Field.BonusMod));
+            string difficulty = ReadField(Field.Difficulty);
+            int partySize = difficulty.Length == 3 && difficulty[1] == ':' ? difficulty[0] - '0' : 0;
             return new FloorData
             {
                 FloorNumber = ParseInt(ReadField(Field.Floor)),
+                PartySize = partySize,
                 Size = size,
                 Bonus = size == "Large" ? (double)bonusField / 360 : GetBonus(),
                 MobsKilledMod = ParseInt(ReadField(Field.LevelMod)),
