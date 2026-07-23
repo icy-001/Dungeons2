@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Numerics;
 using System.Text;
 
 namespace Dungeons2.Services
@@ -196,7 +195,7 @@ namespace Dungeons2.Services
             if (floorData.PartySize == 0)
                 floorData.PartySize = DungeonStore.Map.PlayerCount;
 
-            LogService.Instance.Log($"Floor {DungeonStore.FloorCounter} time={floorData.Time} | key count={BitOperations.PopCount(DungeonStore.KeyMask)}");
+            LogService.Instance.Log($"Floor {DungeonStore.FloorCounter} time={floorData.Time}");
 
             try
             {

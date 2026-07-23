@@ -107,7 +107,7 @@ namespace Dungeons2
             return -1;
         }
 
-        static int ParseInt(string s) => int.TryParse(s, NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out int res) ? res : 0;
+        static int ParseInt(string s) => int.TryParse(s, NumberStyles.AllowLeadingSign | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out int res) ? res : 0;
         static TimeSpan ParseTimeSpan(string s) => TimeSpan.TryParse(s, out var res) ? res : TimeSpan.Zero;
     }
 }

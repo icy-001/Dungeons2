@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -20,6 +19,9 @@ namespace Dungeons2.Views
             base.OnKeyDown(e);
             if (e.Key == Key.D)
             {
+                //var wint = new WinterfaceReader(SpriteLoader.LoadFromFile(@"C:\Projects\Dungeons2\bin\Release\net10.0-windows10.0.26100.0\Winterfaces\2026-07-22 21-14-48.png"));
+                //var data = wint.Read();
+                //MessageBox.Show(data.Bonus.ToString());
             }
         }
 
