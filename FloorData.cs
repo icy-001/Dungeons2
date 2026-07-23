@@ -41,6 +41,8 @@ namespace Dungeons2
         public int CriticalKeyCount => Map?.ComputeCriticalStats().KeyCount ?? 0;
         [JsonIgnore]
         public int Depth => Map?.ComputeDepth() ?? 0;
+        [JsonIgnore]
+        public double Rpm => Time.TotalMinutes == 0 ? 0.0 : (double)RoomCount / Time.TotalMinutes;
 
         [JsonIgnore]
         public RenderTargetBitmap AnnotatedMapImage

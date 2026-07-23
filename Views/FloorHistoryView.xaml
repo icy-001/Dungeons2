@@ -167,6 +167,11 @@
                                 <TextBlock Text="{Binding Depth}" Style="{StaticResource ValueStyle}"/>
                             </DockPanel>
 
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="RPM" Style="{StaticResource LabelStyle}"/>
+                                <TextBlock Text="{Binding Rpm, StringFormat={}{0:F2}}" Style="{StaticResource ValueStyle}"/>
+                            </DockPanel>
+
                             <DockPanel>
                                 <TextBlock Text="Winterface File" Style="{StaticResource LabelStyle}"/>
                                 <Button Content="Open ↗" Background="Transparent" Foreground="#4DA6FF" BorderThickness="0"
