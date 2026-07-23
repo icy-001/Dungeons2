@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Globalization;
 using System.Text;
 
 namespace Dungeons2
@@ -27,7 +28,7 @@ namespace Dungeons2
             while (true)
             {
                 bool found = false;
-                foreach (var (c, img) in field.FontType.Characters)
+                foreach (var (c, img) in field.FontType.Glyphs)
                 {
                     if (Image.IsMatchAlphaColor(img, x, field.Y, field.ForeColor))
                     {
@@ -106,7 +107,7 @@ namespace Dungeons2
             return -1;
         }
 
-        static int ParseInt(string s) => int.TryParse(s, out int res) ? res : 0;
+        static int ParseInt(string s) => int.TryParse(s, NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out int res) ? res : 0;
         static TimeSpan ParseTimeSpan(string s) => TimeSpan.TryParse(s, out var res) ? res : TimeSpan.Zero;
     }
 }

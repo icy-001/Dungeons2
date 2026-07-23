@@ -29,7 +29,7 @@
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="280"/>
                 <ColumnDefinition Width="349*"/>
                 <ColumnDefinition Width="158*"/>
             </Grid.ColumnDefinitions>
@@ -57,7 +57,7 @@
                                            FontWeight="SemiBold"
                                            Width="50"/>
 
-                                <TextBlock Foreground="#888" Width="40" Text="{Binding PartySizeLabel}" />
+                                <TextBlock Foreground="#888" Width="50" Text="{Binding PartySizeLabel}" />
                                 <TextBlock Foreground="#888" Text="{Binding Size}" Width="60" />
                                 <TextBlock Foreground="#888" Text="{Binding Bonus, StringFormat={}{0:P0}}" />
                             </StackPanel>
@@ -83,7 +83,7 @@
                                     <Setter Property="FontSize" Value="13"/>
                                     <Setter Property="VerticalAlignment" Value="Center"/>
                                     <Setter Property="DockPanel.Dock" Value="Left"/>
-                                    <Setter Property="Width" Value="120"/>
+                                    <Setter Property="Width" Value="140"/>
                                 </Style>
                                 <Style x:Key="ValueStyle" TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="White"/>
@@ -118,6 +118,11 @@
                             </DockPanel>
 
                             <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="Mobs Killed (%)" Style="{StaticResource LabelStyle}"/>
+                                <TextBlock Text="{Binding MobsKilledMod}" Style="{StaticResource ValueStyle}"/>
+                            </DockPanel>
+
+                            <DockPanel Margin="0,0,0,12">
                                 <TextBlock Text="Room count" Style="{StaticResource LabelStyle}"/>
                                 <TextBlock Text="{Binding RoomCount}" Style="{StaticResource ValueStyle}"/>
                             </DockPanel>
@@ -125,6 +130,21 @@
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock Text="Dead ends" Style="{StaticResource LabelStyle}"/>
                                 <TextBlock Text="{Binding DeadEnds}" Style="{StaticResource ValueStyle}"/>
+                            </DockPanel>
+
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="Skill doors" Style="{StaticResource LabelStyle}"/>
+                                <TextBlock Text="{Binding SkillDoors}" Style="{StaticResource ValueStyle}"/>
+                            </DockPanel>
+
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="Skill door ticks" Style="{StaticResource LabelStyle}"/>
+                                <TextBlock Text="{Binding SkillDoorTicks}" Style="{StaticResource ValueStyle}"/>
+                            </DockPanel>
+
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="Possible puzzle rooms" Style="{StaticResource LabelStyle}"/>
+                                <TextBlock Text="{Binding PossiblePuzzleRooms}" Style="{StaticResource ValueStyle}"/>
                             </DockPanel>
 
                             <DockPanel Margin="0,0,0,12">
@@ -140,6 +160,11 @@
                             <DockPanel Margin="0,0,0,12" Visibility="{Binding IsSolo, Converter={StaticResource BoolToVisConverter}}">
                                 <TextBlock Text="Critical keys" Style="{StaticResource LabelStyle}"/>
                                 <TextBlock Text="{Binding CriticalKeyCount}" Style="{StaticResource ValueStyle}"/>
+                            </DockPanel>
+
+                            <DockPanel Margin="0,0,0,12" Visibility="{Binding IsSolo, Converter={StaticResource BoolToVisConverter}}">
+                                <TextBlock Text="Depth" Style="{StaticResource LabelStyle}"/>
+                                <TextBlock Text="{Binding Depth}" Style="{StaticResource ValueStyle}"/>
                             </DockPanel>
 
                             <DockPanel>

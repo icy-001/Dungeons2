@@ -182,6 +182,20 @@ namespace Dungeons2
             return res;
         }
 
+        public (int Count, int Ticks) SkillDoorStats()
+        {
+            int count = 0, ticks = 0;
+            for (int i = 0; i < Rows; i++)
+                for (int j = 0; j < Cols; j++)
+                    if (this[i, j].Opened && this[i, j].SkillDoor != -1)
+                    {
+                        var entry = Registry.SkillDoors[this[i, j].SkillDoor];
+                        ++count;
+                        ticks += entry.Ticks;
+                    }
+            return (count, ticks);
+        }
+
         public byte[,] ComputeUnopenedGrid()
         {
             byte[,] mystery = new byte[8, 8];
@@ -202,7 +216,7 @@ namespace Dungeons2
 
         public bool[,] ComputeCriticalGrid()
         {
-            bool[,] res = new bool[8, 8];
+            var res = new bool[8, 8];
             if (Boss == Coord.Nothing || Base == Coord.Nothing || PlayerCount != 1 || KeyMask() == 0)
                 return res;
             res[Base.Row, Base.Col] = true;
@@ -233,7 +247,7 @@ namespace Dungeons2
         public (int Count, int KeyCount) ComputeCriticalStats()
         {
             int count = 0, keyCount = 0;
-            bool[,] criticalGrid = ComputeCriticalGrid();
+            var criticalGrid = ComputeCriticalGrid();
             for (int i = 0; i < Rows; i++)
                 for (int j = 0; j < Cols; j++)
                     if (criticalGrid[i, j])
@@ -245,18 +259,60 @@ namespace Dungeons2
             return (count, keyCount);
         }
 
-        public (int Count, int Ticks) SkillDoorStats()
+        /// <summary>
+        /// Computes the longest 1-way path length of the floor. Starts at 1 for base room.
+        /// </summary>
+        /// <returns>The depth of the map, which is the longest 1-way path length of the floor.</returns>
+        public int ComputeDepth()
         {
-            int count = 0, ticks = 0;
-            for (int i = 0; i < Rows; i++)
-                for (int j = 0; j < Cols; j++)
-                    if (this[i, j].Opened && this[i, j].SkillDoor != -1)
+            if (Boss == Coord.Nothing || Base == Coord.Nothing || PlayerCount != 1 || KeyMask() != LockMask())
+                return 0;
+
+            int res = 0;
+            ulong keyMask = 0;
+
+            Span<Coord> frontier = stackalloc Coord[64];
+            Span<Coord> nextFrontier = stackalloc Coord[64];
+
+            frontier[0] = Base;
+            int frontierCount = 1;
+
+            while (frontierCount > 0 && res < 64)
+            {
+                ++res;
+                int nextCount = 0;
+                ulong nextKeymask = keyMask;
+                bool progressed = false;
+
+                for (int i = 0; i < frontierCount; i++)
+                {
+                    var (r, c) = frontier[i];
+                    var room = this[r, c];
+                    if (room.Lock != -1 && (keyMask & (1UL << room.Lock)) == 0)
                     {
-                        var entry = Registry.SkillDoors[this[i, j].SkillDoor];
-                        ++count;
-                        ticks += entry.Ticks;
+                        nextFrontier[nextCount++] = frontier[i];
+                        continue;
                     }
-            return (count, ticks);
+                    progressed = true;
+                    if (room.Key != -1)
+                        nextKeymask |= 1UL << room.Key;
+                    foreach (var d in SingleDirections)
+                        if (room.Doors.HasFlag(d) && room.Parent != d)
+                            nextFrontier[nextCount++] = Add(frontier[i], d);
+                }
+
+                if (!progressed)
+                    break;
+
+                var temp = frontier;
+                frontier = nextFrontier;
+                nextFrontier = temp;
+
+                frontierCount = nextCount;
+                keyMask = nextKeymask;
+            }
+
+            return res;
         }
 
         public static Coord Add(Coord p, Directions d) => d switch
