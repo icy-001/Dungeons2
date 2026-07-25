@@ -1,6 +1,7 @@
 ﻿using Dungeons2.Services;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -29,7 +30,6 @@ namespace Dungeons2
             EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
         };
         private ulong currentKeyMask;
-        private int currentRoomCount;
 
         public OverlayWindow()
         {
@@ -74,7 +74,6 @@ namespace Dungeons2
                 for (int j = 0; j < 8; ++j)
                     activeRects[i, j] = null;
             currentKeyMask = 0;
-            currentRoomCount = 0;
         }
 
         /// <summary>
@@ -140,7 +139,21 @@ namespace Dungeons2
             TicksRun.Foreground = Registry.GetTicksBrush(ticks);
             RpmRun.Text = $"{rpm,2:F1}";
             RpmRun.Foreground = RpmRatioToBrush(ratio);
-            HistoryRun.Text = string.Join(" • ", from x in DungeonStore.RoomTicks.TakeLast(4) select x.Ticks.ToString().PadLeft(2));
+
+            HistorySpan.Inlines.Clear();
+            var recentTicks = DungeonStore.RoomTicks.TakeLast(4).ToList();
+
+            for (int i = 0; i < recentTicks.Count; i++)
+            {
+                int t = recentTicks[i].Ticks;
+                var tickRun = new Run(t.ToString().PadLeft(2)) { Foreground = Registry.GetTicksBrush(t) };
+                HistorySpan.Inlines.Add(tickRun);
+                if (i < recentTicks.Count - 1)
+                {
+                    var separatorRun = new Run { Text = " • " };
+                    HistorySpan.Inlines.Add(separatorRun);
+                }
+            }
         }
 
         /// <summary>
@@ -148,10 +161,6 @@ namespace Dungeons2
         /// </summary>
         private void OnMapChanged()
         {
-            //string keys = string.Empty;
-            //for (int k = 0; k < 64; ++k)
-            //    if ((DungeonStore.KeyMask & (1UL << k)) != 0) keys += Registry.GetKeyName(k) + " ";
-            //Debug.WriteLine("current keys = " + keys);
             for (int i = 0; i < 8; ++i)
                 for (int j = 0; j < 8; ++j)
                 {
@@ -182,28 +191,6 @@ namespace Dungeons2
                     }
                 }
             currentKeyMask = DungeonStore.KeyMask;
-
-            // Only draw slow rooms
-            if (DungeonStore.RoomCount > currentRoomCount)
-            {
-                for (; currentRoomCount < DungeonStore.RoomCount; ++currentRoomCount)
-                {
-                    var (i, j, ticks) = DungeonStore.RoomTicks[currentRoomCount];
-                    if (i < 0 || j < 0 || ticks < 20)
-                        continue;
-                    var textBlock = new TextBlock
-                    {
-                        Text = ticks.ToString(),
-                        Foreground = Brushes.Red,
-                        FontFamily = new FontFamily("Cascadia Code"),
-                        FontSize = 10,
-                        FontWeight = FontWeights.Bold
-                    };
-                    Canvas.SetLeft(textBlock, 12 + 32 * j + Registry.RoomTickOffset.X);
-                    Canvas.SetTop(textBlock, 12 + 32 * i + Registry.RoomTickOffset.Y);
-                    _ = OverlayCanvas.Children.Add(textBlock);
-                }
-            }
         }
 
         static SolidColorBrush RpmRatioToBrush(double ratio)

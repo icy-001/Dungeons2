@@ -19,7 +19,7 @@
                 [ <Run x:Name="TicksRun" FontSize="16">00t</Run> ]
                 <Run x:Name="RpmRun" Foreground="White">0.0</Run> <Run>rpm</Run>
                 <LineBreak />
-                [ <Run x:Name="HistoryRun" Foreground="Gray">History</Run> ]
+                [ <Span x:Name="HistorySpan" Foreground="Gray"></Span> ]
             </TextBlock>
         </Border>
     </StackPanel>
