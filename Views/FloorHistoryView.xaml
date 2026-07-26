@@ -35,13 +35,28 @@
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0" Background="#18181A" BorderBrush="#2D2D30" BorderThickness="1" CornerRadius="6" Margin="0,0,15,0">
-                <ListBox ItemsSource="{Binding FloorHistory}"
-                         SelectedItem="{Binding SelectedFloor}"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                         FontSize="13"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         Foreground="#E0E0E0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8,8,8,6" VerticalAlignment="Center">
+                        <TextBlock Text="Team size" Foreground="#888" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox Width="100"
+                                  ItemsSource="{Binding TeamSizeFilterOptions}"
+                                  SelectedItem="{Binding SelectedTeamSizeFilter, UpdateSourceTrigger=PropertyChanged}"
+                                  Padding="6,4">
+                        </ComboBox>
+                    </StackPanel>
+
+                    <ListBox x:Name="FloorHistoryListBox" Grid.Row="1" ItemsSource="{Binding FilteredFloorHistory}"
+                             SelectedItem="{Binding SelectedFloor}"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             FontSize="13"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Foreground="#E0E0E0">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Margin="4">
@@ -63,8 +78,9 @@
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
-                </ListBox>
-            </Border>
+                        </ListBox>
+                    </Grid>
+                </Border>
 
             <Border Grid.Column="1" Style="{StaticResource CardStyle}" Grid.ColumnSpan="2" DataContext="{Binding SelectedFloor}">
                 <Grid>
@@ -91,6 +107,11 @@
                                     <Setter Property="VerticalAlignment" Value="Center"/>
                                 </Style>
                             </StackPanel.Resources>
+
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="Timestamp" Style="{StaticResource LabelStyle}"/>
+                                <TextBlock Text="{Binding Timestamp, StringFormat={}{0:G}}" Style="{StaticResource ValueStyle}"/>
+                            </DockPanel>
 
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock Text="Floor #" Style="{StaticResource LabelStyle}"/>

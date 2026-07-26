@@ -6,7 +6,7 @@
         xmlns:viewmodels="clr-namespace:Dungeons2.ViewModels"
         xmlns:views="clr-namespace:Dungeons2.Views"
         xmlns:local="clr-namespace:Dungeons2"
-        mc:Ignorable="d" Title="Dungeons" Height="840" Width="1200"
+        mc:Ignorable="d" Title="Dungeons" Height="840" Width="1230"
         WindowStartupLocation="CenterScreen"
         Background="#121212" Foreground="#E0E0E0">
     <Window.DataContext>
