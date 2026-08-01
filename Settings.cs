@@ -20,6 +20,9 @@ namespace Dungeons2
         public string SpreadsheetId { get; set; } = string.Empty;
         public string SpreadsheetColumn { get; set; } = "B";
         public int SpreadsheetStartRow { get; set; } = 1;
+        public bool ShowKeydoors { get; set; } = true;
+        public bool ShowKeyLocations { get; set; } = true;
+        public bool ShowRoomTicks { get; set; } = true;
 
         public void Save() => SettingsManager.Save(this);
     }

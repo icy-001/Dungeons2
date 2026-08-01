@@ -22,8 +22,9 @@ namespace Dungeons2.Views
             if (FloorHistoryListBox.Items.Count == 0)
                 return;
 
-            FloorHistoryListBox.SelectedIndex = FloorHistoryListBox.Items.Count - 1;
-            FloorHistoryListBox.ScrollIntoView(FloorHistoryListBox.Items[^1]);
+            if (FloorHistoryListBox.SelectedIndex == -1)
+                FloorHistoryListBox.SelectedIndex = FloorHistoryListBox.Items.Count - 1;
+            FloorHistoryListBox.ScrollIntoView(FloorHistoryListBox.SelectedItem);
             FloorHistoryListBox.UpdateLayout();
         }
 

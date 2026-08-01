@@ -35,17 +35,20 @@ namespace Dungeons2
                     {
                         dc.DrawImage(room.Lock == -1 && room.SkillDoor == -1 ? Registry.MysteryBitmaps[unopenedDir - 1] : Registry.UnopenedBitmaps[unopenedDir - 1], new(x, y, 32, 32));
                     }
-                    if (room.Lock != -1)
+                    if (Settings.Instance.ShowKeydoors)
                     {
-                        var bmp = Registry.GetMapKey(room.Lock).ToBitmapSource();
-                        dc.DrawImage(bmp, new(x + MapHudReader.MapKeyOffsetX, y + MapHudReader.MapKeyOffsetY, bmp.Width, bmp.Height));
+                        if (room.Lock != -1)
+                        {
+                            var bmp = Registry.GetMapKey(room.Lock).ToBitmapSource();
+                            dc.DrawImage(bmp, new(x + MapHudReader.MapKeyOffsetX, y + MapHudReader.MapKeyOffsetY, bmp.Width, bmp.Height));
+                        }
+                        else if (room.SkillDoor != -1 && !room.Opened)
+                        {
+                            var bmp = Registry.GetSkillIcon(room.SkillDoor).ToBitmapSource();
+                            dc.DrawImage(bmp, new(x + MapHudReader.SkillOffsetX, y + MapHudReader.SkillOffsetY, bmp.Width, bmp.Height));
+                        }
                     }
-                    else if (room.SkillDoor != -1 && !room.Opened)
-                    {
-                        var bmp = Registry.GetSkillIcon(room.SkillDoor).ToBitmapSource();
-                        dc.DrawImage(bmp, new(x + MapHudReader.SkillOffsetX, y + MapHudReader.SkillOffsetY, bmp.Width, bmp.Height));
-                    }
-                    if (room.Key != -1)
+                    if (Settings.Instance.ShowKeyLocations && room.Key != -1)
                     {
                         var bmp = Registry.GetKeybagKey(room.Key).ToBitmapSource();
                         dc.DrawImage(bmp, new(x + 14, y + 1, bmp.Width, bmp.Height));
@@ -63,6 +66,9 @@ namespace Dungeons2
 
         public static void DrawRoomTicks(DrawingContext dc, int offX, int offY, IEnumerable<RoomSplit> roomTicks)
         {
+            if (!Settings.Instance.ShowRoomTicks)
+                return;
+
             foreach (var (r, c, ticks) in roomTicks)
             {
                 if (r < 0 || c < 0 || ticks <= 0)

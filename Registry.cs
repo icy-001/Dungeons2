@@ -151,8 +151,6 @@ namespace Dungeons2
             }
         }
 
-        public string GetKeyName(int index) => index < 0 ? "none" : Colors[index / 8] + Shapes[index % 8];
-
         public RawImageView GetKeybagKey(int index) => new(KeybagKeys[index], KeybagKeyWidth, KeybagKeyHeight);
 
         public RawImageView GetMapKey(int index) => new(MapKeys[index], MapKeyWidth, MapKeyHeight);
@@ -162,6 +160,8 @@ namespace Dungeons2
         public RawImage GetSkillIcon(int index) => SkillDoors[index].Image;
 
         public RawImageView GetPlayerDot(int index) => new(PlayerDots[index], PlayerDotWidth, PlayerDotHeight);
+
+        public static string GetKeyName(int index) => index < 0 ? "none" : Colors[index / 8] + Shapes[index % 8];
 
         public static uint[] ComputeSignature(RawImageView image, int offX = 0, int offY = 0)
         {
@@ -174,6 +174,6 @@ namespace Dungeons2
             ];
         }
 
-        public static SolidColorBrush GetTicksBrush(int ticks) => ticks < 10 ? Brushes.Lime : ticks < 20 ? Brushes.Yellow : Brushes.Red;
+        public static SolidColorBrush GetTicksBrush(int ticks) => ticks <= 10 ? Brushes.Lime : ticks <= 20 ? Brushes.Yellow : Brushes.Red;
     }
 }

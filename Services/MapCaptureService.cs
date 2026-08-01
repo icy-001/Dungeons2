@@ -136,7 +136,7 @@ namespace Dungeons2.Services
                     for (int k = 0; k < 64; ++k)
                         if ((keymaskDelta & 1UL << k) != 0)
                         {
-                            LogService.Instance.Log($"Found key {Registry.Instance.GetKeyName(k)} in {o.Value.ToChessString()}");
+                            LogService.Instance.Log($"Found key {Registry.GetKeyName(k)} in {o.Value.ToChessString()}");
                             DungeonStore.Map[o.Value.Row, o.Value.Col].Key = k;
                         }
             }
