@@ -13,6 +13,24 @@ namespace Dungeons2
         {
             byte[,] unopenedGrid = map.ComputeUnopenedGrid();
             bool[,] criticalGrid = map.ComputeCriticalGrid();
+            bool[,] trivialKeyblockGrid = map.ComputeTrivialKeyblockGrid();
+            bool[,] trivialKeyLocationGrid = new bool[8, 8];
+
+            if (Settings.Instance.HideTrivialKeyblocks)
+            {
+                for (int i = 0; i < 8; ++i)
+                    for (int j = 0; j < 8; ++j)
+                    {
+                        var room = map[i, j];
+                        if (room.Lock != -1 && trivialKeyblockGrid[i, j])
+                        {
+                            for (int r = 0; r < 8; ++r)
+                                for (int c = 0; c < 8; ++c)
+                                    if (map[r, c].Key == room.Lock)
+                                        trivialKeyLocationGrid[r, c] = true;
+                        }
+                    }
+            }
 
             for (int i = 0; i < 8; ++i)
                 for (int j = 0; j < 8; ++j)
@@ -37,10 +55,14 @@ namespace Dungeons2
                     }
                     if (Settings.Instance.ShowKeydoors)
                     {
+                        bool shouldHideTrivialKeyblock = Settings.Instance.HideTrivialKeyblocks && trivialKeyblockGrid[i, j];
                         if (room.Lock != -1)
                         {
-                            var bmp = Registry.GetMapKey(room.Lock).ToBitmapSource();
-                            dc.DrawImage(bmp, new(x + MapHudReader.MapKeyOffsetX, y + MapHudReader.MapKeyOffsetY, bmp.Width, bmp.Height));
+                            if (!shouldHideTrivialKeyblock)
+                            {
+                                var bmp = Registry.GetMapKey(room.Lock).ToBitmapSource();
+                                dc.DrawImage(bmp, new(x + MapHudReader.MapKeyOffsetX, y + MapHudReader.MapKeyOffsetY, bmp.Width, bmp.Height));
+                            }
                         }
                         else if (room.SkillDoor != -1 && !room.Opened)
                         {
@@ -50,8 +72,12 @@ namespace Dungeons2
                     }
                     if (Settings.Instance.ShowKeyLocations && room.Key != -1)
                     {
-                        var bmp = Registry.GetKeybagKey(room.Key).ToBitmapSource();
-                        dc.DrawImage(bmp, new(x + 14, y + 1, bmp.Width, bmp.Height));
+                        bool shouldHideTrivialKeyLocation = Settings.Instance.HideTrivialKeyblocks && trivialKeyLocationGrid[i, j];
+                        if (!shouldHideTrivialKeyLocation)
+                        {
+                            var bmp = Registry.GetKeybagKey(room.Key).ToBitmapSource();
+                            dc.DrawImage(bmp, new(x + 14, y + 1, bmp.Width, bmp.Height));
+                        }
                     }
                 }
             for (int i = 0; i < 5; ++i)

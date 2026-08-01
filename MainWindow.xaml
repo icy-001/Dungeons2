@@ -62,6 +62,9 @@
                     <RadioButton Content="📝  Log" Style="{StaticResource SidebarButtonStyle}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Log"/>
 
+                    <RadioButton Content="📊  Stats" Style="{StaticResource SidebarButtonStyle}"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Stats"/>
+
                     <RadioButton Content="🛠  Settings" Style="{StaticResource SidebarButtonStyle}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Settings"/>
                 </StackPanel>
@@ -99,6 +102,10 @@
 
                 <DataTemplate DataType="{x:Type viewmodels:LogViewModel}">
                     <views:LogView />
+                </DataTemplate>
+
+                <DataTemplate DataType="{x:Type viewmodels:StatsViewModel}">
+                    <views:StatsView />
                 </DataTemplate>
 
                 <DataTemplate DataType="{x:Type viewmodels:SettingsViewModel}">

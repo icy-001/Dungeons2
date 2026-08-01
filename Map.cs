@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace Dungeons2
 {
+    public record struct ExtendedDeadEnds(int Dewks, int Denks);
+
     public class Map
     {
         [JsonConstructor]
@@ -123,7 +125,7 @@ namespace Dungeons2
         /// Only works for solos.
         /// </summary>
         /// <returns>Returns pair (dewks, denks).</returns>
-        public (int Dewks, int Denks) DeadEndCountExtended()
+        public ExtendedDeadEnds DeadEndCountExtended()
         {
             Debug.Assert(PlayerCount == 1, "DeadEndCountExtended only works for solos.");
             int dewks = 0, denks = 0;
@@ -139,7 +141,7 @@ namespace Dungeons2
                             ++dewks;
                     }
                 }
-            return (dewks, denks);
+            return new(dewks, denks);
         }
 
         public int PossiblePuzzleCount()
@@ -212,6 +214,55 @@ namespace Dungeons2
                 }
             }
             return mystery;
+        }
+
+        public bool[,] ComputeTrivialKeyblockGrid()
+        {
+            var res = new bool[Rows, Cols];
+            if (Base == Coord.Nothing || PlayerCount != 1)
+                return res;
+
+            var keyLocations = new Coord[64];
+            for (int i = 0; i < Rows; i++)
+                for (int j = 0; j < Cols; j++)
+                {
+                    var room = this[i, j];
+                    if (room.Key != -1)
+                        keyLocations[room.Key] = new(i, j);
+                }
+
+            for (int i = 0; i < Rows; i++)
+                for (int j = 0; j < Cols; j++)
+                {
+                    var room = this[i, j];
+                    if (room.Lock == -1)
+                        continue;
+
+                    var keyLocation = keyLocations[room.Lock];
+                    if (keyLocation == Coord.Nothing)
+                        continue;
+
+                    var current = new Coord(i, j);
+                    while (current != Coord.Nothing)
+                    {
+                        if (current == keyLocation)
+                        {
+                            res[i, j] = true;
+                            break;
+                        }
+
+                        if (current == Base)
+                            break;
+
+                        var currentRoom = this[current.Row, current.Col];
+                        if (currentRoom.Parent == Directions.None)
+                            break;
+
+                        current = Add(current, currentRoom.Parent);
+                    }
+                }
+
+            return res;
         }
 
         public bool[,] ComputeCriticalGrid()

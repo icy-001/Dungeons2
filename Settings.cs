@@ -22,6 +22,7 @@ namespace Dungeons2
         public int SpreadsheetStartRow { get; set; } = 1;
         public bool ShowKeydoors { get; set; } = true;
         public bool ShowKeyLocations { get; set; } = true;
+        public bool HideTrivialKeyblocks { get; set; } = false;
         public bool ShowRoomTicks { get; set; } = true;
 
         public void Save() => SettingsManager.Save(this);

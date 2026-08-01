@@ -14,6 +14,7 @@ namespace Dungeons2.ViewModels
         private readonly HomeViewModel _homeViewModel = new();
         private readonly FloorHistoryViewModel _floorHistoryViewModel = new();
         private readonly LogViewModel _logViewModel = new();
+        private readonly StatsViewModel _statsViewModel = new();
         private readonly SettingsViewModel _settingsViewModel = new();
 
         [ObservableProperty]
@@ -53,6 +54,7 @@ namespace Dungeons2.ViewModels
                 "Home" => _homeViewModel,
                 "FloorHistory" => _floorHistoryViewModel,
                 "Log" => _logViewModel,
+                "Stats" => _statsViewModel,
                 "Settings" => _settingsViewModel,
                 _ => CurrentView
             };

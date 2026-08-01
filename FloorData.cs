@@ -40,6 +40,8 @@ namespace Dungeons2
         [JsonIgnore]
         public int CriticalKeyCount => Map?.ComputeCriticalStats().KeyCount ?? 0;
         [JsonIgnore]
+        public ExtendedDeadEnds DeadEndCountExtended => Map?.DeadEndCountExtended() ?? new();
+        [JsonIgnore]
         public int Depth => Map?.ComputeDepth() ?? 0;
         [JsonIgnore]
         public double Rpm => Time.TotalMinutes == 0 ? 0.0 : (double)RoomCount / Time.TotalMinutes;

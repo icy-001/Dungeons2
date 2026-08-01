@@ -153,6 +153,16 @@
                                 <TextBlock Text="{Binding DeadEnds}" Style="{StaticResource ValueStyle}"/>
                             </DockPanel>
 
+                            <DockPanel Margin="0,0,0,12" Visibility="{Binding IsSolo, Converter={StaticResource BoolToVisConverter}}">
+                                <TextBlock Text="Dead ends with key" Style="{StaticResource LabelStyle}"/>
+                                <TextBlock Text="{Binding DeadEndCountExtended.Dewks}" Style="{StaticResource ValueStyle}"/>
+                            </DockPanel>
+
+                            <DockPanel Margin="0,0,0,12" Visibility="{Binding IsSolo, Converter={StaticResource BoolToVisConverter}}">
+                                <TextBlock Text="Dead ends w/o key" Style="{StaticResource LabelStyle}"/>
+                                <TextBlock Text="{Binding DeadEndCountExtended.Denks}" Style="{StaticResource ValueStyle}"/>
+                            </DockPanel>
+
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock Text="Skill doors" Style="{StaticResource LabelStyle}"/>
                                 <TextBlock Text="{Binding SkillDoors}" Style="{StaticResource ValueStyle}"/>
