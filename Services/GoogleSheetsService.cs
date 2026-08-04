@@ -17,10 +17,7 @@ namespace Dungeons2.Services
         public void Initialize()
         {
             if (!File.Exists("google-credentials.json"))
-            {
-                Settings.Instance.LogToSheet = false;
                 return;
-            }
 
             string[] Scopes = [SheetsService.Scope.Spreadsheets];
             string serviceAccountKeyPath = "google-credentials.json";

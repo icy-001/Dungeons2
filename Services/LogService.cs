@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.IO;
 
 namespace Dungeons2.Services
 {
@@ -15,6 +16,13 @@ namespace Dungeons2.Services
         public void Log(string message)
         {
             Logs.Add((DateTimeOffset.Now, message));
+            OnLogReceived?.Invoke((DateTimeOffset.Now, message));
+        }
+
+        public void LogError(string message)
+        {
+            Logs.Add((DateTimeOffset.Now, message));
+            File.AppendAllText("errors.log", $"[{DateTimeOffset.Now:G}] {message}\n");
             OnLogReceived?.Invoke((DateTimeOffset.Now, message));
         }
     }

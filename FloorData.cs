@@ -1,23 +1,30 @@
-﻿using System.Text.Json;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.ComponentModel;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace Dungeons2
 {
-    public class FloorData
+    public partial class FloorData : ObservableObject
     {
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             WriteIndented = false
         };
 
+        public FloorData()
+        {
+            Settings.Instance.PropertyChanged += Settings_PropertyChanged;
+        }
+
         public int Id { get; set; }
         public DateTimeOffset Timestamp { get; set; }
         public int PartySize { get; set; }
         public string Teammates { get; set; } = string.Empty;
         public int FloorNumber { get; set; } = 1;
-        public TimeSpan Time { get; set; } = TimeSpan.Zero;
+        public TimeSpan Time { get; set; }
         public string Size { get; set; } = "Small";
         public double Bonus { get; set; }
         public int MobsKilledMod { get; set; }
@@ -32,9 +39,12 @@ namespace Dungeons2
         public int KeyCount { get; set; }
         public string Notes { get; set; } = string.Empty;
         public Map? Map { get; set; }
+        public RoomSplit[] RoomTicks { get; set; } = [];
+        public bool IsPartial { get; set; }
+
+
         [JsonIgnore]
         public WriteableBitmap? MapImage { get; set; }
-        public RoomSplit[] RoomTicks { get; set; } = [];
         [JsonIgnore]
         public int CriticalRoomCount => Map?.ComputeCriticalStats().Count ?? 0;
         [JsonIgnore]
@@ -45,6 +55,17 @@ namespace Dungeons2
         public int Depth => Map?.ComputeDepth() ?? 0;
         [JsonIgnore]
         public double Rpm => Time.TotalMinutes == 0 ? 0.0 : (double)RoomCount / Time.TotalMinutes;
+
+        private void Settings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(Settings.ShowKeydoors)
+                or nameof(Settings.ShowKeyLocations)
+                or nameof(Settings.HideTrivialKeyblocks)
+                or nameof(Settings.ShowRoomTicks))
+            {
+                OnPropertyChanged(nameof(AnnotatedMapImage));
+            }
+        }
 
         [JsonIgnore]
         public RenderTargetBitmap AnnotatedMapImage

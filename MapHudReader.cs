@@ -79,7 +79,7 @@ namespace Dungeons2
             for (int i = 0; i < 8; ++i)
                 for (int j = 0; j < 8; ++j)
                 {
-                    ref var currentRoom = ref res[i, j];
+                    ref var room = ref res[i, j];
 
                     int x = 12 + 32 * j, y = 12 + 32 * i;
                     uint[] sig = Registry.ComputeSignature(Image, x, y);
@@ -88,51 +88,51 @@ namespace Dungeons2
                     {
                         if (Enumerable.SequenceEqual(sig, Registry.RoomSignatures[k]))
                         {
-                            currentRoom.Doors = (Directions)k;
-                            currentRoom.Opened = true;
+                            room.Doors = (Directions)k;
+                            room.Opened = true;
                             ++roomcount;
 
                             if (Image[x + 23, y + 13] == BaseColor)
                             {
-                                currentRoom.IsBase = true;
+                                room.IsBase = true;
                                 res.Base = new(i, j);
                             }
                             else if (Image[x + 21, y + 11] == BossColor)
                             {
-                                currentRoom.IsBoss = true;
+                                room.IsBoss = true;
                                 res.Boss = new(i, j);
                             }
                             break;
                         }
                     }
 
-                    if (!currentRoom.Opened)
+                    if (!room.Opened)
                     {
                         for (int k = 0; k < 64; ++k)
                         {
                             double dist = Image.MatchDistance(Registry.GetMapKey(k), x + MapKeyOffsetX, y + MapKeyOffsetY, MatchThreshold);
                             if (dist < MatchThreshold)
                             {
-                                currentRoom.Lock = k;
+                                room.Lock = k;
                                 break;
                             }
 
                             dist = Image.MatchDistance(Registry.GetHighlightedMapKey(k), x + HighlightedMapKeyOffsetX, y + HighlightedMapKeyOffsetY, MatchThreshold);
                             if (dist < MatchThreshold)
                             {
-                                currentRoom.Lock = k;
+                                room.Lock = k;
                                 break;
                             }
                         }
 
-                        if (currentRoom.Lock == -1)
+                        if (room.Lock == -1)
                         {
                             for (int k = 0; k < Registry.SkillDoors.Length; ++k)
                             {
                                 double dist = Image.MatchDistance(Registry.GetSkillIcon(k), x + SkillOffsetX, y + SkillOffsetY, MatchThreshold);
                                 if (dist < MatchThreshold)
                                 {
-                                    currentRoom.SkillDoor = k;
+                                    room.SkillDoor = k;
                                     break;
                                 }
                             }
@@ -141,7 +141,10 @@ namespace Dungeons2
 
                     for (int p = 0; p < 5; ++p)
                         if (Image.IsExactMatch(Registry.GetPlayerDot(p), x + Registry.PlayerDotOffsets[p].X, y + Registry.PlayerDotOffsets[p].Y))
+                        {
                             res.PlayerLocations[p] = new(i, j);
+                            room.VisitedMask |= (byte)(1 << p);
+                        }
                 }
 
             res.AssignParents();

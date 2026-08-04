@@ -216,7 +216,33 @@
                     </StackPanel>
 
                     <Border Grid.Column="1" Background="#141416" BorderBrush="#2D2D30" BorderThickness="1" CornerRadius="4" VerticalAlignment="Top">
-                        <Image Width="280" Height="280" Source="{Binding AnnotatedMapImage}" />
+                        <StackPanel>
+                            <Image Width="280" Height="280" Source="{Binding AnnotatedMapImage}" />
+                            <Border Background="#1A1A1D" Padding="12,10" BorderBrush="#2D2D30" BorderThickness="0,1,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Overlay" Foreground="White" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <CheckBox Content="Show keydoors"
+                                              IsChecked="{Binding Source={x:Static local:Settings.Instance}, Path=ShowKeydoors, Mode=TwoWay}"
+                                              Foreground="#E0E0E0"
+                                              FontSize="12"
+                                              Margin="0,0,0,6"/>
+                                    <CheckBox Content="Show key locations"
+                                              IsChecked="{Binding Source={x:Static local:Settings.Instance}, Path=ShowKeyLocations, Mode=TwoWay}"
+                                              Foreground="#E0E0E0"
+                                              FontSize="12"
+                                              Margin="0,0,0,6"/>
+                                    <CheckBox Content="Hide trivial keyblocks"
+                                              IsChecked="{Binding Source={x:Static local:Settings.Instance}, Path=HideTrivialKeyblocks, Mode=TwoWay}"
+                                              Foreground="#E0E0E0"
+                                              FontSize="12"
+                                              Margin="0,0,0,6"/>
+                                    <CheckBox Content="Show room ticks"
+                                              IsChecked="{Binding Source={x:Static local:Settings.Instance}, Path=ShowRoomTicks, Mode=TwoWay}"
+                                              Foreground="#E0E0E0"
+                                              FontSize="12"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
                     </Border>
                 </Grid>
             </Border>

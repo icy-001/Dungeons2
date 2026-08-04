@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Dungeons2.Services;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Data;
@@ -46,6 +47,8 @@ namespace Dungeons2
 
         private DungeonStore()
         {
+            Settings.Instance.PropertyChanged += Settings_PropertyChanged;
+
             MapCaptureService.Instance.OnFloorCompleted += (floorData) =>
             {
                 lock (_floorHistoryLock)
@@ -62,6 +65,17 @@ namespace Dungeons2
 
             BindingOperations.EnableCollectionSynchronization(RoomTicks, _roomTicksLock);
             BindingOperations.EnableCollectionSynchronization(FloorHistory, _floorHistoryLock);
+        }
+
+        private void Settings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(Settings.ShowKeydoors)
+                or nameof(Settings.ShowKeyLocations)
+                or nameof(Settings.HideTrivialKeyblocks)
+                or nameof(Settings.ShowRoomTicks))
+            {
+                OnPropertyChanged(nameof(AnnotatedMapImage));
+            }
         }
 
         public void UpdateMapImage(RawImageView image)

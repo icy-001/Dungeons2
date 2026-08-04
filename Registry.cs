@@ -38,6 +38,8 @@ namespace Dungeons2
 
         public readonly uint[][] PlayerDots = new uint[5][];
         public readonly BitmapSource[] PlayerDotBitmaps = new BitmapSource[5];
+        public readonly Color[] PlayerDotColors = [Color.FromRgb(255, 96, 43), Color.FromRgb(0, 255, 247), Color.FromRgb(136, 247, 0), Color.FromRgb(251, 255, 133), Color.FromRgb(144, 176, 125)];
+        public readonly SolidColorBrush[] PlayerDotBrushes;
 
         public RawImage HudMarker { get; private set; } = new();
         public BitmapSource? BaseOverlayBitmap { get; private set; }
@@ -72,6 +74,9 @@ namespace Dungeons2
         private Registry()
         {
             SkillDoors = new SkillDoor[skillDoorData.Length];
+            PlayerDotBrushes = new SolidColorBrush[5];
+            for (int i = 0; i < 5; ++i)
+                PlayerDotBrushes[i] = new SolidColorBrush(PlayerDotColors[i]) { Opacity = 0.5 };
         }
 
         public void Initialize()

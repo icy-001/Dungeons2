@@ -45,7 +45,7 @@ namespace Dungeons2.Services
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                File.AppendAllText("errors.log", $"[{DateTimeOffset.Now:G}] {e.Message}\n");
+                LogService.Instance.LogError("Error in MapCaptureService.Start: " + e.Message);
                 throw;
             }
         }
@@ -78,7 +78,6 @@ namespace Dungeons2.Services
                         DungeonStore.IsActive = false;
                         int floorEndTicks = (int)(DungeonStore.RoomStopwatch.Elapsed.TotalMilliseconds / 600);
                         DungeonStore.AddRoomTick(new(-1, -1, floorEndTicks));
-                        LogService.Instance.Log($"Ending floor took {floorEndTicks} ticks ({floorEndTicks * 0.6:F1} s)");
                     }
                     if (!string.IsNullOrEmpty(winterfaceReader.ReadField(Field.FinalXP)))
                     {
@@ -194,6 +193,7 @@ namespace Dungeons2.Services
             floorData.RoomTicks = [.. DungeonStore.RoomTicks];
             if (floorData.PartySize == 0)
                 floorData.PartySize = DungeonStore.Map.PlayerCount;
+            floorData.IsPartial = DungeonStore.IsPartial;
 
             LogService.Instance.Log($"Floor {DungeonStore.FloorCounter} time={floorData.Time}");
 

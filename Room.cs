@@ -1,4 +1,6 @@
-﻿namespace Dungeons2
+﻿using System.Text.Json.Serialization;
+
+namespace Dungeons2
 {
     public record struct Room(
         bool Opened = false,
@@ -8,10 +10,12 @@
         int Key = -1,
         int SkillDoor = -1,
         bool IsBase = false,
-        bool IsBoss = false)
+        bool IsBoss = false,
+        byte VisitedMask = 0)
     {
         public Room() : this(Lock: -1, Key: -1, SkillDoor: -1) { }
 
+        [JsonIgnore]
         public readonly bool IsDeadEnd => Doors != Directions.None && Doors == Parent && !IsBase && !IsBoss;
 
         /// <summary>
@@ -21,20 +25,18 @@
         /// <returns>True if there was a change; otherwise, false.</returns>
         public bool Merge(Room other)
         {
-            if (Opened)
-                return false;
             bool changed = false;
-            if (Opened != other.Opened)
+            if (!Opened && Opened != other.Opened)
             {
                 Opened = other.Opened;
                 changed = true;
             }
-            if (Doors != other.Doors)
+            if (Doors == Directions.None && Doors != other.Doors)
             {
                 Doors = other.Doors;
                 changed = true;
             }
-            if (Parent != other.Parent)
+            if (Parent == Directions.None && Parent != other.Parent)
             {
                 Parent = other.Parent;
                 changed = true;
@@ -54,14 +56,19 @@
                 SkillDoor = other.SkillDoor;
                 changed = true;
             }
-            if (IsBase != other.IsBase)
+            if (!IsBase && IsBase != other.IsBase)
             {
                 IsBase |= other.IsBase;
                 changed = true;
             }
-            if (IsBoss != other.IsBoss)
+            if (!IsBoss && IsBoss != other.IsBoss)
             {
                 IsBoss |= other.IsBoss;
+                changed = true;
+            }
+            if (VisitedMask != other.VisitedMask)
+            {
+                VisitedMask |= other.VisitedMask;
                 changed = true;
             }
             return changed;
