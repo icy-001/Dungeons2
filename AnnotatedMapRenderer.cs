@@ -56,21 +56,22 @@ namespace Dungeons2
                 }
 
             // Draw all player visited masks
-            for (int i = 0; i < 8; ++i)
-                for (int j = 0; j < 8; ++j)
-                {
-                    int x = j * 32 + offX;
-                    int y = i * 32 + offY;
-                    var room = map[i, j];
-                    if (room.VisitedMask != 0)
-                        for (int p = 0; p < 5; ++p)
-                            if ((room.VisitedMask & 1 << p) != 0)
-                            {
-                                dc.DrawEllipse(Registry.PlayerDotBrushes[p], null,
-                                    new(x + Registry.PlayerDotOffsets[p].X + Registry.PlayerDotWidth / 2, y + Registry.PlayerDotOffsets[p].Y + Registry.PlayerDotHeight / 2),
-                                    Registry.PlayerDotWidth / 2, Registry.PlayerDotHeight / 2);
-                            }
-                }
+            if (Settings.Instance.ShowPlayerVisitedOverlay)
+                for (int i = 0; i < 8; ++i)
+                    for (int j = 0; j < 8; ++j)
+                    {
+                        int x = j * 32 + offX;
+                        int y = i * 32 + offY;
+                        var room = map[i, j];
+                        if (room.VisitedMask != 0)
+                            for (int p = 0; p < 5; ++p)
+                                if ((room.VisitedMask & 1 << p) != 0)
+                                {
+                                    dc.DrawEllipse(Registry.PlayerDotBrushes[p], null,
+                                        new(x + Registry.PlayerDotOffsets[p].X + Registry.PlayerDotWidth / 2, y + Registry.PlayerDotOffsets[p].Y + Registry.PlayerDotHeight / 2),
+                                        Registry.PlayerDotWidth / 2, Registry.PlayerDotHeight / 2);
+                                }
+                    }
 
             // Draw all locks and skill doors
             for (int i = 0; i < 8; ++i)
@@ -113,6 +114,7 @@ namespace Dungeons2
                             }
                         }
                     }
+
 
             for (int i = 0; i < 5; ++i)
                 if (map.PlayerLocations[i] is Coord p)

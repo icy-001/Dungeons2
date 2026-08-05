@@ -239,6 +239,11 @@
                                     <CheckBox Content="Show room ticks"
                                               IsChecked="{Binding Source={x:Static local:Settings.Instance}, Path=ShowRoomTicks, Mode=TwoWay}"
                                               Foreground="#E0E0E0"
+                                              FontSize="12"
+                                              Margin="0,0,0,6"/>
+                                    <CheckBox Content="Show player visited overlay"
+                                              IsChecked="{Binding Source={x:Static local:Settings.Instance}, Path=ShowPlayerVisitedOverlay, Mode=TwoWay}"
+                                              Foreground="#E0E0E0"
                                               FontSize="12"/>
                                 </StackPanel>
                             </Border>

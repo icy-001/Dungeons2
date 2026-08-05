@@ -72,7 +72,8 @@ namespace Dungeons2
             if (e.PropertyName is nameof(Settings.ShowKeydoors)
                 or nameof(Settings.ShowKeyLocations)
                 or nameof(Settings.HideTrivialKeyblocks)
-                or nameof(Settings.ShowRoomTicks))
+                or nameof(Settings.ShowRoomTicks)
+                or nameof(Settings.ShowPlayerVisitedOverlay))
             {
                 OnPropertyChanged(nameof(AnnotatedMapImage));
             }
