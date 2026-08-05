@@ -223,11 +223,12 @@ namespace Dungeons2
                 return res;
 
             var keyLocations = new Coord[64];
+            Array.Fill(keyLocations, Coord.Nothing);
             for (int i = 0; i < Rows; i++)
                 for (int j = 0; j < Cols; j++)
                 {
                     var room = this[i, j];
-                    if (room.Key != -1)
+                    if (room.Key != -1 && room.Key >= 0 && room.Key < 64)
                         keyLocations[room.Key] = new(i, j);
                 }
 
@@ -242,23 +243,63 @@ namespace Dungeons2
                     if (keyLocation == Coord.Nothing)
                         continue;
 
-                    var current = new Coord(i, j);
-                    while (current != Coord.Nothing)
+                    // Compute the Mandatory Prerequisite Closure (M) for this specific lock
+                    var M = new HashSet<Coord>();
+                    var Q = new Queue<Coord>();
+                    var queuedDestinations = new HashSet<Coord>();
+
+                    var Rlock = new Coord(i, j);
+                    int targetLock = room.Lock;
+
+                    Q.Enqueue(Rlock);
+                    queuedDestinations.Add(Rlock);
+
+                    while (Q.Count > 0)
                     {
-                        if (current == keyLocation)
+                        var T = Q.Dequeue();
+
+                        // Trace the unique ancestor path from Base to T
+                        var path = new List<Coord>();
+                        var current = T;
+                        while (current != Coord.Nothing)
                         {
-                            res[i, j] = true;
-                            break;
+                            path.Add(current);
+                            if (current == Base)
+                                break;
+
+                            var currentRoom = this[current.Row, current.Col];
+                            if (currentRoom.Parent == Directions.None)
+                                break;
+
+                            current = Add(current, currentRoom.Parent);
                         }
+                        path.Reverse();
 
-                        if (current == Base)
-                            break;
+                        for (int idx = 0; idx < path.Count; idx++)
+                        {
+                            var roomLoc = path[idx];
+                            M.Add(roomLoc);
 
-                        var currentRoom = this[current.Row, current.Col];
-                        if (currentRoom.Parent == Directions.None)
-                            break;
+                            if (idx < path.Count - 1)
+                            {
+                                var nextLoc = path[idx + 1];
+                                var nextRoom = this[nextLoc.Row, nextLoc.Col];
+                                if (nextRoom.Lock != -1 && nextRoom.Lock != targetLock && nextRoom.Lock >= 0 && nextRoom.Lock < 64)
+                                {
+                                    var keyLoc = keyLocations[nextRoom.Lock];
+                                    if (keyLoc != Coord.Nothing && !queuedDestinations.Contains(keyLoc))
+                                    {
+                                        Q.Enqueue(keyLoc);
+                                        queuedDestinations.Add(keyLoc);
+                                    }
+                                }
+                            }
+                        }
+                    }
 
-                        current = Add(current, currentRoom.Parent);
+                    if (M.Contains(keyLocation))
+                    {
+                        res[i, j] = true;
                     }
                 }
 
