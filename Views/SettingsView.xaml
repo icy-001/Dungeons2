@@ -30,7 +30,7 @@
                 <Border Background="#1E1E1E" CornerRadius="8" Padding="25" Margin="0,0,0,20">
                     <StackPanel>
                         <TextBlock Text="Annotated Map Overlay" FontSize="18" FontWeight="Bold" Foreground="White" Margin="0,0,0,15"/>
-                        <CheckBox Content="Show keydoors"
+                        <CheckBox Content="Show opened keydoors"
                                   IsChecked="{Binding Source={x:Static local:Settings.Instance}, Path=ShowKeydoors, Mode=TwoWay}"
                                   Foreground="#E0E0E0"
                                   FontSize="14"

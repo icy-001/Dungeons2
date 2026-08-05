@@ -73,60 +73,26 @@ namespace Dungeons2
                 }
 
             // Draw all locks and skill doors
-            if (Settings.Instance.ShowKeydoors)
-                for (int i = 0; i < 8; ++i)
-                    for (int j = 0; j < 8; ++j)
-                    {
-                        int x = j * 32 + offX;
-                        int y = i * 32 + offY;
-                        var room = map[i, j];
+            for (int i = 0; i < 8; ++i)
+                for (int j = 0; j < 8; ++j)
+                {
+                    int x = j * 32 + offX;
+                    int y = i * 32 + offY;
+                    var room = map[i, j];
 
-                        bool shouldHideTrivialKeyblock = room.Opened && Settings.Instance.HideTrivialKeyblocks && trivialKeyblockGrid[i, j];
-                        if (room.Lock != -1)
-                        {
-                            if (!shouldHideTrivialKeyblock)
-                            {
-                                // Commented out code to draw keydoors on edges instead of rooms. Doesn't look nice, which is why it's commented out.
-                                //if (room.Opened)
-                                //{
-                                //    // Draw on edge
-                                //    var bmp = Registry.GetKeybagKey(room.Lock).ToBitmapSource();
-                                //    PointInt32 center = new(x + 16 - (int)bmp.Width / 2, y + 16 - (int)bmp.Height / 2);
-                                //    switch (room.Parent)
-                                //    {
-                                //        case Directions.W:
-                                //            center.X -= 16;
-                                //            break;
-                                //        case Directions.E:
-                                //            center.X += 16;
-                                //            break;
-                                //        case Directions.S:
-                                //            center.Y += 16;
-                                //            break;
-                                //        case Directions.N:
-                                //            center.Y -= 16;
-                                //            break;
-                                //        default:
-                                //            LogService.Instance.LogError("Unexpected parent direction for room with lock: " + room.Parent);
-                                //            break;
-                                //    }
-                                //    dc.DrawRectangle(lockBrush, null, new(center.X + 1, center.Y - 1, 16, 16));
-                                //    dc.DrawImage(bmp, new(center.X, center.Y, bmp.Width, bmp.Height));
-                                //}
-                                //else
-                                //{
-                                // Draw on room
-                                var bmp = Registry.GetMapKey(room.Lock).ToBitmapSource();
-                                dc.DrawImage(bmp, new(x + MapHudReader.MapKeyOffsetX, y + MapHudReader.MapKeyOffsetY, bmp.Width, bmp.Height));
-                                //}
-                            }
-                        }
-                        else if (room.SkillDoor != -1 && !room.Opened)
-                        {
-                            var bmp = Registry.GetSkillIcon(room.SkillDoor).ToBitmapSource();
-                            dc.DrawImage(bmp, new(x + MapHudReader.SkillOffsetX, y + MapHudReader.SkillOffsetY, bmp.Width, bmp.Height));
-                        }
+                    bool showKeydoor = !room.Opened || Settings.Instance.ShowKeydoors;
+                    bool shouldHideTrivialKeyblock = Settings.Instance.HideTrivialKeyblocks && trivialKeyblockGrid[i, j];
+                    if (room.Lock != -1 && showKeydoor && !shouldHideTrivialKeyblock)
+                    {
+                        var bmp = Registry.GetMapKey(room.Lock).ToBitmapSource();
+                        dc.DrawImage(bmp, new(x + MapHudReader.MapKeyOffsetX, y + MapHudReader.MapKeyOffsetY, bmp.Width, bmp.Height));
                     }
+                    else if (room.SkillDoor != -1 && !room.Opened)
+                    {
+                        var bmp = Registry.GetSkillIcon(room.SkillDoor).ToBitmapSource();
+                        dc.DrawImage(bmp, new(x + MapHudReader.SkillOffsetX, y + MapHudReader.SkillOffsetY, bmp.Width, bmp.Height));
+                    }
+                }
 
             // Draw all keys
             if (Settings.Instance.ShowKeyLocations)
