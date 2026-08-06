@@ -140,7 +140,51 @@
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0" Background="#18181A" BorderBrush="#2D2D30" BorderThickness="1" CornerRadius="6" HorizontalAlignment="Left" Padding="10">
-                    <Image Width="280" Height="280" Source="{Binding DungeonStore.AnnotatedMapImage}"/>
+                    <StackPanel>
+                        <Image Width="280" Height="280" Source="{Binding DungeonStore.AnnotatedMapImage}"/>
+                        
+                        <!-- Visited Counts Line -->
+                        <Border Padding="0,8,0,0" Margin="0,10,0,0" BorderBrush="#2D2D30" BorderThickness="0,1,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="Rooms Visited: " Foreground="#888888" FontSize="11" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                <!-- P1 -->
+                                <Border Background="#33FF602B" CornerRadius="3" Padding="4,2" Margin="2,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="P1: " Foreground="#FF602B" FontSize="10" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding DungeonStore.VisitedCounts[0]}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Border>
+                                <!-- P2 -->
+                                <Border Background="#3300FFF7" CornerRadius="3" Padding="4,2" Margin="2,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="P2: " Foreground="#00FFF7" FontSize="10" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding DungeonStore.VisitedCounts[1]}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Border>
+                                <!-- P3 -->
+                                <Border Background="#3388F700" CornerRadius="3" Padding="4,2" Margin="2,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="P3: " Foreground="#88F700" FontSize="10" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding DungeonStore.VisitedCounts[2]}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Border>
+                                <!-- P4 -->
+                                <Border Background="#33FBFF85" CornerRadius="3" Padding="4,2" Margin="2,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="P4: " Foreground="#FBFF85" FontSize="10" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding DungeonStore.VisitedCounts[3]}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Border>
+                                <!-- P5 -->
+                                <Border Background="#3390B07D" CornerRadius="3" Padding="4,2" Margin="2,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="P5: " Foreground="#90B07D" FontSize="10" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding DungeonStore.VisitedCounts[4]}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </Border>
 
                 <Border Grid.Column="1" Background="#18181A" BorderBrush="#2D2D30" BorderThickness="1" CornerRadius="6" Margin="15,0,0,0" Padding="12">

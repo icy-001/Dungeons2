@@ -125,6 +125,8 @@ namespace Dungeons2
             });
         }
 
+        public int[] VisitedCounts => Map.VisitedCounts;
+
         public void UpdateAnnotatedMapImage()
         {
             const int offX = 12, offY = 12;
@@ -136,6 +138,7 @@ namespace Dungeons2
                 AnnotatedMapRenderer.DrawRoomTicks(dc, offX, offY, RoomTicks);
             }
             AnnotatedMapImage.Render(visual);
+            OnPropertyChanged(nameof(VisitedCounts));
         }
 
         public void AddRoomTick(RoomSplit split)

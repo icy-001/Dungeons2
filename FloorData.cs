@@ -55,6 +55,8 @@ namespace Dungeons2
         public int Depth => Map?.ComputeDepth() ?? 0;
         [JsonIgnore]
         public double Rpm => Time.TotalMinutes == 0 ? 0.0 : (double)RoomCount / Time.TotalMinutes;
+        [JsonIgnore]
+        public int[] VisitedCounts => Map?.VisitedCounts ?? new int[5];
 
         private void Settings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {

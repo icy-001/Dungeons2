@@ -121,6 +121,25 @@ namespace Dungeons2
             return count;
         }
 
+        [JsonIgnore]
+        public int[] VisitedCounts
+        {
+            get
+            {
+                var counts = new int[5];
+                for (int p = 0; p < 5; ++p)
+                {
+                    int count = 0;
+                    for (int r = 0; r < Rows; r++)
+                        for (int c = 0; c < Cols; c++)
+                            if ((this[r, c].VisitedMask & (1 << p)) != 0)
+                                ++count;
+                    counts[p] = count;
+                }
+                return counts;
+            }
+        }
+
         /// <summary>
         /// Only works for solos.
         /// </summary>
