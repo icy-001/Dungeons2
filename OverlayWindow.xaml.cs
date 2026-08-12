@@ -127,8 +127,8 @@ namespace Dungeons2
             if (elapsed.TotalMilliseconds < 0)
                 return;
             double rpm = CalculateRpm(c, elapsed.TotalMinutes);
-            double targetRpm = DungeonStore.Map.PlayerCount > 0 && DungeonStore.Map.PlayerCount <= Settings.Instance.TargetRpms.Length
-                ? Settings.Instance.TargetRpms[DungeonStore.Map.PlayerCount - 1]
+            double targetRpm = DungeonStore.Map.PlayerCount > 0 && DungeonStore.Map.PlayerCount <= Settings.Instance.AverageRpms.Length
+                ? Settings.Instance.AverageRpms[DungeonStore.Map.PlayerCount - 1]
                 : 0;
             double ratio = rpm / targetRpm;
             int ticks = (int)Math.Ceiling((double)DungeonStore.RoomStopwatch.ElapsedMilliseconds / 600);

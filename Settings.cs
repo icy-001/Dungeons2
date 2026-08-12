@@ -1,7 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System.ComponentModel;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace Dungeons2
@@ -18,7 +16,7 @@ namespace Dungeons2
         [ObservableProperty] public partial int WinterfaceY { get; set; } = 373;
         [ObservableProperty] public partial string MapSaveLocation { get; set; } = "Maps";
         [ObservableProperty] public partial string WinterfaceSaveLocation { get; set; } = "Winterfaces";
-        [ObservableProperty] public partial double[] TargetRpms { get; set; } = [8.4, 13, 16, 18, 20];
+        [ObservableProperty] public partial double[] AverageRpms { get; set; } = [8.4, 13, 16, 18, 20];
         [ObservableProperty] public partial bool LogToSheet { get; set; }
         [ObservableProperty] public partial string SpreadsheetId { get; set; } = string.Empty;
         [ObservableProperty] public partial string SpreadsheetColumn { get; set; } = "B";

@@ -19,10 +19,17 @@ namespace Dungeons2.ViewModels
 
         private void RefreshHistograms()
         {
-            static bool filter(FloorData floor) => !floor.IsPartial && floor.PartySize == 1 && floor.Bonus == 1 && floor.Size == "Large" && floor.FloorNumber <= 11;
+            static bool frozenFilter(FloorData floor) => !floor.IsPartial && floor.PartySize == 1 && floor.Bonus == 1 && floor.Size == "Large" && floor.FloorNumber <= 11;
+            static bool ab1Filter(FloorData floor) => !floor.IsPartial && floor.PartySize == 1 && floor.Bonus == 1 && floor.Size == "Large" && floor.FloorNumber >= 12 && floor.FloorNumber <= 17;
 
-            var eligibleFloors = DungeonStore.Instance.FloorHistory.Where(filter).ToList();
-            var matchingTicks = eligibleFloors
+            var frozenFloors = DungeonStore.Instance.FloorHistory.Where(frozenFilter).ToList();
+            var ab1Floors = DungeonStore.Instance.FloorHistory.Where(ab1Filter).ToList();
+            var frozenTicks = frozenFloors
+                .SelectMany(floor => floor.RoomTicks)
+                .Select(split => split.Ticks)
+                .Where(ticks => ticks > 0)
+                .ToList();
+            var ab1Ticks = ab1Floors
                 .SelectMany(floor => floor.RoomTicks)
                 .Select(split => split.Ticks)
                 .Where(ticks => ticks > 0)
@@ -30,23 +37,24 @@ namespace Dungeons2.ViewModels
 
             Histograms.Clear();
             ScatterPlots.Clear();
-            Histograms.Add(CreateHistogram("Room ticks", matchingTicks));
-            Histograms.Add(CreateHistogram("Key count", eligibleFloors.Select(floor => floor.KeyCount)));
-            Histograms.Add(CreateHistogram("Critical key count", eligibleFloors.Select(floor => floor.CriticalKeyCount)));
-            Histograms.Add(CreateHistogram("Bonus key count", eligibleFloors.Select(floor => floor.KeyCount - floor.CriticalKeyCount)));
-            Histograms.Add(CreateHistogram("Critical rooms", eligibleFloors.Select(floor => floor.CriticalRoomCount)));
-            Histograms.Add(CreateHistogram("Depth", eligibleFloors.Select(floor => floor.Depth)));
-            Histograms.Add(CreateHistogram("Dead ends", eligibleFloors.Select(floor => floor.DeadEnds)));
-            Histograms.Add(CreateHistogram("Dewks", eligibleFloors.Select(floor => floor.DeadEndCountExtended.Dewks)));
-            Histograms.Add(CreateHistogram("Denks", eligibleFloors.Select(floor => floor.DeadEndCountExtended.Denks)));
+            Histograms.Add(CreateHistogram("Frozen room ticks", frozenTicks));
+            Histograms.Add(CreateHistogram("Ab1 room ticks", ab1Ticks));
+            Histograms.Add(CreateHistogram("Key count", frozenFloors.Select(floor => floor.KeyCount)));
+            Histograms.Add(CreateHistogram("Critical key count", frozenFloors.Select(floor => floor.CriticalKeyCount)));
+            Histograms.Add(CreateHistogram("Bonus key count", frozenFloors.Select(floor => floor.KeyCount - floor.CriticalKeyCount)));
+            Histograms.Add(CreateHistogram("Critical rooms", frozenFloors.Select(floor => floor.CriticalRoomCount)));
+            Histograms.Add(CreateHistogram("Depth", frozenFloors.Select(floor => floor.Depth)));
+            Histograms.Add(CreateHistogram("Dead ends", frozenFloors.Select(floor => floor.DeadEnds)));
+            Histograms.Add(CreateHistogram("Dewks", frozenFloors.Select(floor => floor.DeadEndCountExtended.Dewks)));
+            Histograms.Add(CreateHistogram("Denks", frozenFloors.Select(floor => floor.DeadEndCountExtended.Denks)));
 
-            ScatterPlots.Add(CreateScatterPlot("Critical rooms vs room count", eligibleFloors.Select(floor => new ScatterPoint(floor.RoomCount, floor.CriticalRoomCount)).ToList()));
-            ScatterPlots.Add(CreateScatterPlot("Critical key count vs critical rooms", eligibleFloors.Select(floor => new ScatterPoint(floor.CriticalRoomCount, floor.CriticalKeyCount)).ToList()));
-            ScatterPlots.Add(CreateScatterPlot("Bonus key count vs bonus room count", eligibleFloors.Select(floor => new ScatterPoint(floor.RoomCount, floor.KeyCount - floor.CriticalKeyCount)).ToList()));
+            ScatterPlots.Add(CreateScatterPlot("Critical rooms vs room count", frozenFloors.Select(floor => new ScatterPoint(floor.RoomCount, floor.CriticalRoomCount)).ToList()));
+            ScatterPlots.Add(CreateScatterPlot("Critical key count vs critical rooms", frozenFloors.Select(floor => new ScatterPoint(floor.CriticalRoomCount, floor.CriticalKeyCount)).ToList()));
+            ScatterPlots.Add(CreateScatterPlot("Bonus key count vs bonus room count", frozenFloors.Select(floor => new ScatterPoint(floor.RoomCount, floor.KeyCount - floor.CriticalKeyCount)).ToList()));
 
-            Summary = eligibleFloors.Count == 0
+            Summary = frozenFloors.Count == 0
                 ? "No fully completed solo large frozen floors have been recorded yet."
-                : $"Showing {matchingTicks.Count} room ticks from {eligibleFloors.Count} fully completed solo large frozen floors.";
+                : $"Showing {frozenTicks.Count} room ticks from {frozenFloors.Count} fully completed solo large frozen floors.";
         }
 
         private static FloorMetricHistogram CreateHistogram(string title, IEnumerable<int> values)

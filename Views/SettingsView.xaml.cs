@@ -42,5 +42,17 @@ namespace Dungeons2.Views
                 CalibrationStatusText.Foreground = Brushes.OrangeRed;
             }
         }
+
+        private void NumberTextBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            foreach (char c in e.Text)
+            {
+                if (!char.IsDigit(c) && c != '.')
+                {
+                    e.Handled = true;
+                    return;
+                }
+            }
+        }
     }
 }
