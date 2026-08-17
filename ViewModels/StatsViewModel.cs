@@ -85,12 +85,12 @@ namespace Dungeons2.ViewModels
             Histograms.Add(CreateHistogram("Dewks", frozenFloors.Select(floor => floor.DeadEndCountExtended.Dewks)));
             Histograms.Add(CreateHistogram("Denks", frozenFloors.Select(floor => floor.DeadEndCountExtended.Denks)));
 
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Frozen floor time CDF", frozenTicks));
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Abandoned 1 floor time CDF", ab1Ticks));
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Furnished floor time CDF", furnishedTicks));
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Abandoned 2 floor time CDF", ab2Ticks));
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Occult floor time CDF", occultTicks));
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Warped floor time CDF", warpedTicks));
+            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Frozen floor time CDF", frozenTicks, AverageFloorTime(frozenFloors)));
+            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Abandoned 1 floor time CDF", ab1Ticks, AverageFloorTime(ab1Floors)));
+            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Furnished floor time CDF", furnishedTicks, AverageFloorTime(furnishedFloors)));
+            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Abandoned 2 floor time CDF", ab2Ticks, AverageFloorTime(ab2Floors)));
+            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Occult floor time CDF", occultTicks, AverageFloorTime(occultFloors)));
+            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Warped floor time CDF", warpedTicks, AverageFloorTime(warpedFloors)));
 
             ScatterPlots.Add(CreateScatterPlot("Critical rooms vs room count", frozenFloors.Select(floor => new ScatterPoint(floor.RoomCount, floor.CriticalRoomCount)).ToList()));
             ScatterPlots.Add(CreateScatterPlot("Critical key count vs critical rooms", frozenFloors.Select(floor => new ScatterPoint(floor.CriticalRoomCount, floor.CriticalKeyCount)).ToList()));
@@ -143,9 +143,16 @@ namespace Dungeons2.ViewModels
             return histogram;
         }
 
-        private static FloorTimeCdfPlot CreateFloorTimeCdf(string title, IReadOnlyCollection<int> roomTicks)
+        private static TimeSpan? AverageFloorTime(IReadOnlyCollection<FloorData> floors) => floors.Count == 0
+            ? null
+            : TimeSpan.FromSeconds(floors.Average(floor => floor.Time.TotalSeconds));
+
+        private static FloorTimeCdfPlot CreateFloorTimeCdf(
+            string title,
+            IReadOnlyCollection<int> roomTicks,
+            TimeSpan? averageFloorTime)
         {
-            var plot = new FloorTimeCdfPlot(title, roomTicks.Count);
+            var plot = new FloorTimeCdfPlot(title, roomTicks.Count, averageFloorTime);
             if (roomTicks.Count == 0)
                 return plot;
 
@@ -252,7 +259,7 @@ namespace Dungeons2.ViewModels
         public string CountLabel => Count.ToString();
     }
 
-    public partial class FloorTimeCdfPlot(string title, int roomSampleCount) : ObservableObject
+    public partial class FloorTimeCdfPlot(string title, int roomSampleCount, TimeSpan? averageFloorTime) : ObservableObject
     {
         private const double ChartWidth = 520;
         private const double ChartHeight = 300;
@@ -265,9 +272,7 @@ namespace Dungeons2.ViewModels
         private double[] _cumulativeProbabilities = [];
 
         public string Title { get; } = title;
-        public string Detail => roomSampleCount == 0
-            ? "No room-tick data"
-            : $"Modeled from {roomSampleCount} room samples; room count 50–64";
+        public string Detail => $"{RoomSampleDetail}   Average recorded floor time: {FormatAverageFloorTime(averageFloorTime)}";
         public PointCollection CdfPoints { get; } = [];
         public string MinimumTimeLabel => "4:30";
         public string MaximumTimeLabel => "9:00";
@@ -360,6 +365,19 @@ namespace Dungeons2.ViewModels
         public void ClearHover()
         {
             HoverMarkerVisibility = Visibility.Collapsed;
+        }
+
+        private string RoomSampleDetail => roomSampleCount == 0
+            ? "No room-tick data"
+            : $"Modeled from {roomSampleCount} room samples; room count 50–64";
+
+        private static string FormatAverageFloorTime(TimeSpan? time)
+        {
+            if (!time.HasValue)
+                return "No data";
+
+            int totalSeconds = (int)Math.Round(time.Value.TotalSeconds);
+            return $"{totalSeconds / 60}:{totalSeconds % 60:00}";
         }
     }
 
