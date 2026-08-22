@@ -101,8 +101,10 @@ namespace Dungeons2
             if (Visibility != Visibility.Visible)
                 Visibility = Visibility.Visible;
 
-            var topLeft = new POINT { X = Settings.Instance.MapX, Y = Settings.Instance.MapY };
-            _ = User32.ClientToScreen(MapCaptureService.Instance.TargetWindowHandle, ref topLeft);
+            IntPtr targetHwnd = MapCaptureService.Instance.TargetWindowHandle;
+            var topLeft = GetCaptureFrameTopLeft(targetHwnd);
+            topLeft.X += Settings.Instance.MapX;
+            topLeft.Y += Settings.Instance.MapY;
             _ = User32.SetWindowPos(
                 hwnd,
                 IntPtr.Zero,
@@ -111,6 +113,30 @@ namespace Dungeons2
                 0,
                 0,
                 User32.SWP_NOSIZE | User32.SWP_NOACTIVATE | User32.SWP_NOZORDER);
+        }
+
+        /// <summary>
+        /// Returns the screen-space origin used by Windows Graphics Capture for a
+        /// top-level window. Map calibration coordinates are relative to this frame,
+        /// not to the window's client area.
+        /// </summary>
+        private static POINT GetCaptureFrameTopLeft(IntPtr targetHwnd)
+        {
+            int result = DwmApi.DwmGetWindowAttribute(
+                targetHwnd,
+                DwmApi.DWMWA_EXTENDED_FRAME_BOUNDS,
+                out RECT frameBounds,
+                (uint)System.Runtime.InteropServices.Marshal.SizeOf<RECT>());
+
+            if (result >= 0)
+                return new POINT { X = frameBounds.Left, Y = frameBounds.Top };
+
+            if (User32.GetWindowRect(targetHwnd, out frameBounds))
+                return new POINT { X = frameBounds.Left, Y = frameBounds.Top };
+
+            var clientTopLeft = new POINT();
+            _ = User32.ClientToScreen(targetHwnd, ref clientTopLeft);
+            return clientTopLeft;
         }
 
         private void UpdateText()

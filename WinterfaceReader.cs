@@ -84,6 +84,7 @@ namespace Dungeons2
             {
                 FloorNumber = ParseInt(ReadField(Field.Floor)),
                 PartySize = partySize,
+                Teammates = partySize <= 1 ? string.Empty : $"({FloorData.GetPartySizeLabel(partySize)})",
                 Size = size,
                 Bonus = size == "Large" ? (double)bonusField / 360 : GetBonus(),
                 MobsKilledMod = ParseInt(ReadField(Field.LevelMod)),

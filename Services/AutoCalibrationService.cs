@@ -47,16 +47,59 @@ namespace Dungeons2.Services
             return false;
         }
 
+        public static bool TryAutoDetectWinterface(out int winterfaceX, out int winterfaceY)
+        {
+            winterfaceX = 0;
+            winterfaceY = 0;
+
+            if (!GameCapture.Instance.IsActive)
+                return false;
+
+            using var frame = GameCapture.Instance.CaptureFullScreen();
+            if (frame.Width == 0 || frame.Height == 0)
+                return false;
+
+            var fullImage = RawImageView.FromFrame(frame);
+            if (!TryFindMarker(fullImage, Registry.Instance.WinterfaceMarker, out int markerX, out int markerY))
+                return false;
+
+            if (markerX + WinterfaceReader.WinterfaceWidth > frame.Width ||
+                markerY + WinterfaceReader.WinterfaceHeight > frame.Height)
+                return false;
+
+            winterfaceX = markerX;
+            winterfaceY = markerY;
+            return true;
+        }
+
         private static bool TryFindMarker(RawImageView image, RawImageView marker, out int x, out int y)
         {
             x = -1;
             y = -1;
 
+            int anchorX = 0;
+            int anchorY = 0;
+            bool anchorFound = false;
+            for (int markerY = 0; markerY < marker.Height && !anchorFound; markerY++)
+                for (int markerX = 0; markerX < marker.Width; markerX++)
+                    if ((marker[markerX, markerY] >> 24) == 255)
+                    {
+                        anchorX = markerX;
+                        anchorY = markerY;
+                        anchorFound = true;
+                        break;
+                    }
+
+            if (!anchorFound)
+                return false;
+
+            uint anchorPixel = marker[anchorX, anchorY];
+
             for (int iy = 0; iy <= image.Height - marker.Height; iy++)
             {
                 for (int ix = 0; ix <= image.Width - marker.Width; ix++)
                 {
-                    if (image.IsExactMatch(marker, ix, iy))
+                    if (image[ix + anchorX, iy + anchorY] == anchorPixel && image.IsExactMatch(marker, ix, iy))
                     {
                         x = ix;
                         y = iy;

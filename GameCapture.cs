@@ -172,8 +172,15 @@ namespace Dungeons2
 
                 using ID3D11Texture2D1 frameTexture = new(currentFrame.Surface.As<IDirect3DDxgiInterfaceAccess>().GetInterface(typeof(ID3D11Texture2D1).GUID));
 
+                int winterfaceX = Settings.Instance.WinterfaceX;
+                int winterfaceY = Settings.Instance.WinterfaceY;
+                if (winterfaceX < 0 || winterfaceY < 0 ||
+                    winterfaceX + WinterfaceReader.WinterfaceWidth > frameTexture.Description.Width ||
+                    winterfaceY + WinterfaceReader.WinterfaceHeight > frameTexture.Description.Height)
+                    return new();
+
                 context.CopySubresourceRegion(winterfaceTexture, 0, 0, 0, 0, frameTexture, 0,
-                    new(offset: new(Settings.Instance.WinterfaceX, Settings.Instance.WinterfaceY, 0),
+                    new(offset: new(winterfaceX, winterfaceY, 0),
                         extent: new(WinterfaceReader.WinterfaceWidth, WinterfaceReader.WinterfaceHeight, 1)));
 
                 var map = context.Map(winterfaceTexture, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);

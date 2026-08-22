@@ -45,6 +45,10 @@ namespace Dungeons2
 
             [LibraryImport("user32.dll", SetLastError = true)]
             [return: MarshalAs(UnmanagedType.Bool)]
+            public static partial bool GetWindowRect(IntPtr hwnd, out RECT lpRect);
+
+            [LibraryImport("user32.dll", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
             public static partial bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
 
             [LibraryImport("user32.dll", SetLastError = true)]
@@ -59,6 +63,18 @@ namespace Dungeons2
 
             [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
             public static partial nint SetWindowLongPtr(IntPtr hwnd, int index, nint newStyle);
+        }
+
+        public static partial class DwmApi
+        {
+            public const uint DWMWA_EXTENDED_FRAME_BOUNDS = 9;
+
+            [LibraryImport("dwmapi.dll")]
+            public static partial int DwmGetWindowAttribute(
+                IntPtr hwnd,
+                uint dwAttribute,
+                out RECT pvAttribute,
+                uint cbAttribute);
         }
     }
 }

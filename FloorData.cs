@@ -92,15 +92,7 @@ namespace Dungeons2
         }
 
         [JsonIgnore]
-        public string PartySizeLabel => PartySize switch
-        {
-            1 => "Solo",
-            2 => "Duo",
-            3 => "Trio",
-            4 => "4-man",
-            5 => "5-man",
-            _ => "Unknown"
-        };
+        public string PartySizeLabel => GetPartySizeLabel(PartySize);
 
         [JsonIgnore]
         public bool IsSolo => PartySize == 1;
@@ -108,5 +100,14 @@ namespace Dungeons2
         public string ToTabSeparatedString() => $"{Id}\t{Timestamp:G}\t{Teammates}\t{FloorNumber}\t{Size}\t{Time}\t{Bonus}\t{MobsKilledMod}\t{Boost}\t{TotalMod}\t{TotalXP}\t{RoomCount}\t{DeadEnds}\t{SkillDoors}\t{SkillDoorTicks}\t{PossiblePuzzleRooms}\t{Notes}\n";
 
         public string ToJsonString() => JsonSerializer.Serialize(this, JsonOptions);
+
+        public static string GetPartySizeLabel(int partySize) => partySize switch
+        {
+            1 => "Solo",
+            2 => "Duo",
+            3 => "Trio",
+            4 => "4-man",
+            _ => "Unknown"
+        };
     }
 }

@@ -13,6 +13,7 @@ namespace Dungeons2.Services
 
         private readonly CancellationTokenSource _cts = new();
         private DateTimeOffset _lastProcessedFloorTime = DateTimeOffset.MinValue;
+        private DateTimeOffset _lastWinterfaceDetectionAttempt = DateTimeOffset.MinValue;
 
         public IntPtr TargetWindowHandle
         {
@@ -26,6 +27,7 @@ namespace Dungeons2.Services
 
                     DungeonStore.KeyMask = 0;
                     DungeonStore.IsActive = false;
+                    _lastWinterfaceDetectionAttempt = DateTimeOffset.MinValue;
                 }
             }
         }
@@ -65,27 +67,22 @@ namespace Dungeons2.Services
             DungeonStore.IsKeybagFound = reader.HasHud();
             if (!hasMap)
             {
-                bool winterfaceSuccess = false;
-                // Check winterface
-                using var winterfaceFrame = GameCapture.CaptureWinterface();
-                WinterfaceReader winterfaceReader = new(RawImageView.FromFrame(winterfaceFrame));
-                if (winterfaceReader.HasWinterface() && DungeonStore.Instance.LastActiveTime != _lastProcessedFloorTime)
+                bool winterfaceSuccess = TryProcessWinterface(out bool winterfaceFound);
+
+                if (!winterfaceFound && DungeonStore.IsActive &&
+                    DateTimeOffset.Now - _lastWinterfaceDetectionAttempt >= TimeSpan.FromSeconds(1))
                 {
-                    if (DungeonStore.IsActive)
+                    _lastWinterfaceDetectionAttempt = DateTimeOffset.Now;
+                    if (AutoCalibrationService.TryAutoDetectWinterface(out int winterfaceX, out int winterfaceY))
                     {
-                        // Just ended floor
-                        DungeonStore.KeyMask = 0;
-                        DungeonStore.IsActive = false;
-                        int floorEndTicks = (int)(DungeonStore.RoomStopwatch.Elapsed.TotalMilliseconds / 600);
-                        DungeonStore.AddRoomTick(new(-1, -1, floorEndTicks));
-                    }
-                    if (!string.IsNullOrEmpty(winterfaceReader.ReadField(Field.FinalXP)))
-                    {
-                        _lastProcessedFloorTime = DungeonStore.Instance.LastActiveTime;
-                        ProcessFinishedFloor(winterfaceReader);
-                        winterfaceSuccess = true;
+                        Settings.Instance.WinterfaceX = winterfaceX;
+                        Settings.Instance.WinterfaceY = winterfaceY;
+                        Settings.Instance.Save();
+                        LogService.Instance.Log($"Auto-detected winterface at ({winterfaceX}, {winterfaceY}).");
+                        winterfaceSuccess = TryProcessWinterface(out _);
                     }
                 }
+
                 if (DateTimeOffset.Now - DungeonStore.LastActiveTime > TimeSpan.FromSeconds(6))
                 {
                     // Probably out of floor (e.g. left party)
@@ -146,6 +143,39 @@ namespace Dungeons2.Services
                 OnMapChanged?.Invoke();
             }
             DungeonStore.UpdateMapImage(mapKeybagImage);
+        }
+
+        private bool TryProcessWinterface(out bool winterfaceFound)
+        {
+            winterfaceFound = false;
+
+            using var winterfaceFrame = GameCapture.CaptureWinterface();
+            if (winterfaceFrame.Width == 0 || winterfaceFrame.Height == 0)
+                return false;
+
+            WinterfaceReader winterfaceReader = new(RawImageView.FromFrame(winterfaceFrame));
+            if (!winterfaceReader.HasWinterface())
+                return false;
+
+            winterfaceFound = true;
+            if (DungeonStore.LastActiveTime == _lastProcessedFloorTime)
+                return false;
+
+            if (DungeonStore.IsActive)
+            {
+                // Just ended floor
+                DungeonStore.KeyMask = 0;
+                DungeonStore.IsActive = false;
+                int floorEndTicks = (int)(DungeonStore.RoomStopwatch.Elapsed.TotalMilliseconds / 600);
+                DungeonStore.AddRoomTick(new(-1, -1, floorEndTicks));
+            }
+
+            if (string.IsNullOrEmpty(winterfaceReader.ReadField(Field.FinalXP)))
+                return false;
+
+            _lastProcessedFloorTime = DungeonStore.LastActiveTime;
+            ProcessFinishedFloor(winterfaceReader);
+            return true;
         }
 
         private void NewFloor()
