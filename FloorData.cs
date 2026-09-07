@@ -107,6 +107,7 @@ namespace Dungeons2
             2 => "Duo",
             3 => "Trio",
             4 => "4-man",
+            5 => "5-man",
             _ => "Unknown"
         };
     }

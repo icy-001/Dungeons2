@@ -358,7 +358,7 @@ namespace Dungeons2.ViewModels
             HoverMarkerTop = TopMargin + (1 - probability) * plotHeight - 4.5;
             HoverCalloutLeft = x <= ChartWidth - RightMargin - 145 ? x + 12 : x - 142;
             HoverCalloutTop = HoverMarkerTop >= 62 ? HoverMarkerTop - 56 : HoverMarkerTop + 15;
-            HoverTooltip = $"Time: {(int)(seconds / 60)}:{seconds % 60:00.0}\nProbability: {probability:P2}";
+            HoverTooltip = $"Time: {(int)(seconds / 60)}:{seconds % 60:00.0}\nProbability: {probability:P3}";
             HoverMarkerVisibility = Visibility.Visible;
         }
 

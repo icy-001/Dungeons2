@@ -1,5 +1,4 @@
-﻿using Dungeons2.Services;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -20,20 +19,23 @@ namespace Dungeons2.Views
             base.OnKeyDown(e);
             if (e.Key == Key.D)
             {
-                foreach (var floor in DungeonStore.Instance.FloorHistory)
-                {
-                    if (floor.Map is null)
-                        continue;
-                    for (int i = 0; i < 8; ++i)
-                        for (int j = 0; j < 8; ++j)
-                        {
-                            var room = floor.Map[i, j];
-                            if (room.Opened && room.Parent == Directions.None && !room.IsBase)
-                            {
-                                LogService.Instance.Log($"{floor.Timestamp:G} - Floor {floor.FloorNumber} - Room ({i}, {j}) has no parent.");
-                            }
-                        }
-                }
+                var wint = new WinterfaceReader(SpriteLoader.LoadFromFile(@"C:\Projects\Dungeons2\bin\Release\net10.0-windows10.0.26100.0\Winterfaces\2026-08-27 17-32-04.png"));
+                var data = wint.Read();
+
+                //foreach (var floor in DungeonStore.Instance.FloorHistory)
+                //{
+                //    if (floor.Map is null)
+                //        continue;
+                //    for (int i = 0; i < 8; ++i)
+                //        for (int j = 0; j < 8; ++j)
+                //        {
+                //            var room = floor.Map[i, j];
+                //            if (room.Opened && room.Parent == Directions.None && !room.IsBase)
+                //            {
+                //                LogService.Instance.Log($"{floor.Timestamp:G} - Floor {floor.FloorNumber} - Room ({i}, {j}) has no parent.");
+                //            }
+                //        }
+                //}
             }
         }
 
