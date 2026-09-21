@@ -74,8 +74,14 @@ namespace Dungeons2
                 Boss = other.Boss;
                 changed = true;
             }
-            changed |= !Enumerable.SequenceEqual(PlayerLocations, other.PlayerLocations);
-            other.PlayerLocations.CopyTo(PlayerLocations, 0);
+            for (int i = 0; i < PlayerLocations.Length; ++i)
+            {
+                if (other.PlayerLocations[i].HasValue && PlayerLocations[i] != other.PlayerLocations[i])
+                {
+                    PlayerLocations[i] = other.PlayerLocations[i];
+                    changed = true;
+                }
+            }
             return (changed, newRoomLocations.ToArray());
         }
 
