@@ -338,6 +338,7 @@ namespace Dungeons2
                 return res;
             res[Base.Row, Base.Col] = true;
             var keyLocs = new Coord[64];
+            Array.Fill(keyLocs, Coord.Nothing);
             for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)
                 {
@@ -348,7 +349,7 @@ namespace Dungeons2
             Stack<int> criticalKeys = [];
             void MakeCritical(Coord pos)
             {
-                for (; !res[pos.Row, pos.Col] && this[pos.Row, pos.Col].Parent != Directions.None; pos = Add(pos, this[pos.Row, pos.Col].Parent))
+                for (; pos != Coord.Nothing && !res[pos.Row, pos.Col] && this[pos.Row, pos.Col].Parent != Directions.None; pos = Add(pos, this[pos.Row, pos.Col].Parent))
                 {
                     res[pos.Row, pos.Col] = true;
                     if (this[pos.Row, pos.Col].Lock != -1)

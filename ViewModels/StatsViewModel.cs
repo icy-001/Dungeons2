@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Media;
 
@@ -7,137 +8,168 @@ namespace Dungeons2.ViewModels
 {
     public partial class StatsViewModel : ObservableObject
     {
+        private static readonly string[] ThemeNames = ["Frozen", "Abandoned 1", "Furnished", "Abandoned 2", "Occult", "Warped"];
         public ObservableCollection<FloorMetricHistogram> Histograms { get; } = [];
         public ObservableCollection<FloorTimeCdfPlot> FloorTimeCdfPlots { get; } = [];
         public ObservableCollection<ScatterPlot> ScatterPlots { get; } = [];
+
+        public IReadOnlyList<string> Themes { get; } = Array.AsReadOnly(ThemeNames);
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(RoomTimeCharts))]
+        public partial int SelectedThemeIndex { get; set; }
+
+        [ObservableProperty]
+        public partial int SelectedSectionIndex { get; set; }
+
+        public IEnumerable<object> RoomTimeCharts =>
+            SelectedThemeIndex >= 0 && SelectedThemeIndex < ThemeNames.Length &&
+            SelectedThemeIndex < Histograms.Count && SelectedThemeIndex < FloorTimeCdfPlots.Count
+                ? [Histograms[SelectedThemeIndex], FloorTimeCdfPlots[SelectedThemeIndex]]
+                : [];
+
+        public IEnumerable<object> MiscellaneousCharts => Histograms.Skip(ThemeNames.Length).Cast<object>().Concat(ScatterPlots);
 
         [ObservableProperty]
         public partial string Summary { get; set; } = "No eligible floors recorded yet.";
 
         public StatsViewModel()
         {
-            DungeonStore.Instance.FloorHistory.CollectionChanged += (_, _) => RefreshHistograms();
+            DungeonStore.Instance.FloorHistory.CollectionChanged += OnFloorHistoryChanged;
             RefreshHistograms();
         }
 
-        private void RefreshHistograms()
+        private static int GetThemeIndex(FloorData floor)
         {
-            static bool frozenFilter(FloorData floor) => !floor.IsPartial && floor.PartySize == 1 && floor.Bonus == 1 && floor.Size == "Large" && floor.FloorNumber <= 11;
-            static bool ab1Filter(FloorData floor) => !floor.IsPartial && floor.PartySize == 1 && floor.Bonus == 1 && floor.Size == "Large" && floor.FloorNumber >= 12 && floor.FloorNumber <= 17;
-            static bool furnishedFilter(FloorData floor) => !floor.IsPartial && floor.PartySize == 1 && floor.Bonus == 1 && floor.Size == "Large" && floor.FloorNumber >= 18 && floor.FloorNumber <= 29;
-            static bool ab2Filter(FloorData floor) => !floor.IsPartial && floor.PartySize == 1 && floor.Bonus == 1 && floor.Size == "Large" && floor.FloorNumber >= 30 && floor.FloorNumber <= 35;
-            static bool occultFilter(FloorData floor) => !floor.IsPartial && floor.PartySize == 1 && floor.Bonus == 1 && floor.Size == "Large" && floor.FloorNumber >= 36 && floor.FloorNumber <= 47;
-            static bool warpedFilter(FloorData floor) => !floor.IsPartial && floor.PartySize == 1 && floor.Bonus == 1 && floor.Size == "Large" && floor.FloorNumber >= 48 && floor.FloorNumber <= 60;
+            if (floor.IsPartial || floor.PartySize != 1 || floor.Bonus != 1 || floor.Size != "Large")
+                return -1;
 
-            var frozenFloors = DungeonStore.Instance.FloorHistory.Where(frozenFilter).ToList();
-            var ab1Floors = DungeonStore.Instance.FloorHistory.Where(ab1Filter).ToList();
-            var furnishedFloors = DungeonStore.Instance.FloorHistory.Where(furnishedFilter).ToList();
-            var ab2Floors = DungeonStore.Instance.FloorHistory.Where(ab2Filter).ToList();
-            var occultFloors = DungeonStore.Instance.FloorHistory.Where(occultFilter).ToList();
-            var warpedFloors = DungeonStore.Instance.FloorHistory.Where(warpedFilter).ToList();
+            return floor.FloorNumber switch
+            {
+                <= 11 => 0,
+                <= 17 => 1,
+                <= 29 => 2,
+                <= 35 => 3,
+                <= 47 => 4,
+                <= 60 => 5,
+                _ => -1
+            };
+        }
 
-            var frozenTicks = frozenFloors
-                .SelectMany(floor => floor.RoomTicks)
-                .Select(split => split.Ticks)
-                .Where(ticks => ticks > 0)
-                .ToList();
-            var ab1Ticks = ab1Floors
-                .SelectMany(floor => floor.RoomTicks)
-                .Select(split => split.Ticks)
-                .Where(ticks => ticks > 0)
-                .ToList();
-            var furnishedTicks = furnishedFloors
-                .SelectMany(floor => floor.RoomTicks)
-                .Select(split => split.Ticks)
-                .Where(ticks => ticks > 0)
-                .ToList();
-            var ab2Ticks = ab2Floors
-                .SelectMany(floor => floor.RoomTicks)
-                .Select(split => split.Ticks)
-                .Where(ticks => ticks > 0)
-                .ToList();
-            var occultTicks = occultFloors
-                .SelectMany(floor => floor.RoomTicks)
-                .Select(split => split.Ticks)
-                .Where(ticks => ticks > 0)
-                .ToList();
-            var warpedTicks = warpedFloors
-                .SelectMany(floor => floor.RoomTicks)
-                .Select(split => split.Ticks)
-                .Where(ticks => ticks > 0)
-                .ToList();
+        private void OnFloorHistoryChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                RefreshHistograms();
+                return;
+            }
 
-            Histograms.Clear();
-            FloorTimeCdfPlots.Clear();
-            ScatterPlots.Clear();
-            Histograms.Add(CreateHistogram("Frozen room ticks", frozenTicks, frozenFloors.Count));
-            Histograms.Add(CreateHistogram("Abandoned 1 room ticks", ab1Ticks, ab1Floors.Count));
-            Histograms.Add(CreateHistogram("Furnished room ticks", furnishedTicks, furnishedFloors.Count));
-            Histograms.Add(CreateHistogram("Abandoned 2 room ticks", ab2Ticks, ab2Floors.Count));
-            Histograms.Add(CreateHistogram("Occult room ticks", occultTicks, occultFloors.Count));
-            Histograms.Add(CreateHistogram("Warped room ticks", warpedTicks, warpedFloors.Count));
-            Histograms.Add(CreateHistogram("Key count", frozenFloors.Select(floor => floor.KeyCount)));
-            Histograms.Add(CreateHistogram("Critical key count", frozenFloors.Select(floor => floor.CriticalKeyCount)));
-            Histograms.Add(CreateHistogram("Bonus key count", frozenFloors.Select(floor => floor.KeyCount - floor.CriticalKeyCount)));
-            Histograms.Add(CreateHistogram("Critical rooms", frozenFloors.Select(floor => floor.CriticalRoomCount)));
-            Histograms.Add(CreateHistogram("Depth", frozenFloors.Select(floor => floor.Depth)));
-            Histograms.Add(CreateHistogram("Dead ends", frozenFloors.Select(floor => floor.DeadEnds)));
-            Histograms.Add(CreateHistogram("Dewks", frozenFloors.Select(floor => floor.DeadEndCountExtended.Dewks)));
-            Histograms.Add(CreateHistogram("Denks", frozenFloors.Select(floor => floor.DeadEndCountExtended.Denks)));
+            var affectedThemes = (e.OldItems?.Cast<FloorData>() ?? [])
+                .Concat(e.NewItems?.Cast<FloorData>() ?? [])
+                .Select(GetThemeIndex).Where(theme => theme >= 0).ToHashSet();
+            if (affectedThemes.Count > 0)
+                RefreshHistograms(affectedThemes);
+        }
 
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Frozen floor time CDF", frozenTicks, AverageFloorTime(frozenFloors)));
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Abandoned 1 floor time CDF", ab1Ticks, AverageFloorTime(ab1Floors)));
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Furnished floor time CDF", furnishedTicks, AverageFloorTime(furnishedFloors)));
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Abandoned 2 floor time CDF", ab2Ticks, AverageFloorTime(ab2Floors)));
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Occult floor time CDF", occultTicks, AverageFloorTime(occultFloors)));
-            FloorTimeCdfPlots.Add(CreateFloorTimeCdf("Warped floor time CDF", warpedTicks, AverageFloorTime(warpedFloors)));
+        private void RefreshHistograms(HashSet<int>? affectedThemes = null)
+        {
+            var floorsByTheme = ThemeNames.Select(_ => new List<FloorData>()).ToArray();
+            foreach (var floor in DungeonStore.Instance.FloorHistory)
+            {
+                int theme = GetThemeIndex(floor);
+                if (theme >= 0)
+                    floorsByTheme[theme].Add(floor);
+            }
 
-            ScatterPlots.Add(CreateScatterPlot("Critical rooms vs room count", frozenFloors.Select(floor => new ScatterPoint(floor.RoomCount, floor.CriticalRoomCount)).ToList()));
-            ScatterPlots.Add(CreateScatterPlot("Critical key count vs critical rooms", frozenFloors.Select(floor => new ScatterPoint(floor.CriticalRoomCount, floor.CriticalKeyCount)).ToList()));
-            ScatterPlots.Add(CreateScatterPlot("Bonus key count vs bonus room count", frozenFloors.Select(floor => new ScatterPoint(floor.RoomCount, floor.KeyCount - floor.CriticalKeyCount)).ToList()));
+            for (int theme = 0; theme < ThemeNames.Length; theme++)
+            {
+                if (affectedThemes is not null && !affectedThemes.Contains(theme))
+                    continue;
 
-            int totalTicks = frozenTicks.Count + ab1Ticks.Count + furnishedTicks.Count + ab2Ticks.Count + occultTicks.Count + warpedTicks.Count;
-            int totalFloors = frozenFloors.Count + ab1Floors.Count + furnishedFloors.Count + ab2Floors.Count + occultFloors.Count + warpedFloors.Count;
+                var floors = floorsByTheme[theme];
+                var ticks = floors.SelectMany(floor => floor.RoomTicks)
+                    .Select(split => split.Ticks).Where(value => value > 0).ToList();
+                SetItem(Histograms, theme, CreateHistogram($"{ThemeNames[theme]} room ticks", ticks, floors.Count));
+                SetItem(FloorTimeCdfPlots, theme, CreateFloorTimeCdf($"{ThemeNames[theme]} floor time CDF", ticks, AverageFloorTime(floors)));
+            }
 
+            RefreshMiscellaneousMetrics(floorsByTheme.SelectMany(floors => floors));
+
+            int totalTicks = Histograms.Take(ThemeNames.Length).Sum(histogram => histogram.SampleCount);
+            int totalFloors = Histograms.Take(ThemeNames.Length).Sum(histogram => histogram.FloorCount ?? 0);
             Summary = totalFloors == 0
                 ? "No fully completed solo large floors have been recorded yet."
                 : $"Showing {totalTicks} room ticks from {totalFloors} fully completed solo large floors across all themes.";
+            if (affectedThemes is null || affectedThemes.Contains(SelectedThemeIndex))
+                OnPropertyChanged(nameof(RoomTimeCharts));
+            OnPropertyChanged(nameof(MiscellaneousCharts));
+        }
+
+        private static void SetItem<T>(ObservableCollection<T> items, int index, T item)
+        {
+            if (index < items.Count)
+                items[index] = item;
+            else
+                items.Add(item);
+        }
+
+        private void RefreshMiscellaneousMetrics(IEnumerable<FloorData> floors)
+        {
+            // These properties traverse the map; compute them once per floor and
+            // share the results between histograms and scatter plots.
+            var metrics = floors.Select(floor =>
+            {
+                var critical = floor.Map?.ComputeCriticalStats() ?? (Count: 0, KeyCount: 0);
+                return new
+                {
+                    floor.KeyCount,
+                    floor.RoomCount,
+                    floor.DeadEnds,
+                    CriticalKeyCount = critical.KeyCount,
+                    CriticalRoomCount = critical.Count,
+                    floor.Depth,
+                    floor.DeadEndCountExtended
+                };
+            }).ToList();
+            int index = ThemeNames.Length;
+            SetItem(Histograms, index++, CreateHistogram("Key count", metrics.Select(floor => floor.KeyCount)));
+            SetItem(Histograms, index++, CreateHistogram("Critical key count", metrics.Select(floor => floor.CriticalKeyCount)));
+            SetItem(Histograms, index++, CreateHistogram("Bonus key count", metrics.Select(floor => floor.KeyCount - floor.CriticalKeyCount)));
+            SetItem(Histograms, index++, CreateHistogram("Critical rooms", metrics.Select(floor => floor.CriticalRoomCount)));
+            SetItem(Histograms, index++, CreateHistogram("Depth", metrics.Where(floor => floor.Depth > 0).Select(floor => floor.Depth)));
+            SetItem(Histograms, index++, CreateHistogram("Dead ends", metrics.Select(floor => floor.DeadEnds)));
+            SetItem(Histograms, index++, CreateHistogram("Dewks", metrics.Select(floor => floor.DeadEndCountExtended.Dewks)));
+            SetItem(Histograms, index, CreateHistogram("Denks", metrics.Select(floor => floor.DeadEndCountExtended.Denks)));
+
+            ScatterPlots.Clear();
         }
 
         private static FloorMetricHistogram CreateHistogram(string title, IEnumerable<int> values, int? floorCount = null)
         {
-            var orderedValues = values.ToList();
-            var histogram = new FloorMetricHistogram(title, orderedValues.Count, floorCount);
-            if (orderedValues.Count == 0)
+            var counts = new Dictionary<int, int>();
+            int sampleCount = 0;
+            double sum = 0;
+            foreach (int value in values)
+            {
+                counts[value] = counts.GetValueOrDefault(value) + 1;
+                sampleCount++;
+                sum += value;
+            }
+
+            var histogram = new FloorMetricHistogram(title, sampleCount, floorCount);
+            if (sampleCount == 0)
                 return histogram;
 
-            histogram.Average = orderedValues.Average();
-            var variance = orderedValues.Count <= 1
-                ? 0
-                : orderedValues.Sum(value => Math.Pow(value - histogram.Average, 2)) / orderedValues.Count;
+            histogram.Average = sum / sampleCount;
+            var variance = counts.Sum(bucket => bucket.Value * Math.Pow(bucket.Key - histogram.Average, 2)) / sampleCount;
             histogram.StandardDeviation = Math.Sqrt(variance);
 
-            int lowerBound = orderedValues.Min();
-            int upperBound = orderedValues.Max();
-
-            if (lowerBound == upperBound)
-            {
-                int count = orderedValues.Count(value => value == lowerBound);
-                histogram.HistogramBars.Add(new HistogramBar(lowerBound, count, count));
-                return histogram;
-            }
-
-            var bucketCounts = new List<(int Value, int Count)>();
+            int lowerBound = counts.Keys.Min();
+            int upperBound = counts.Keys.Max();
+            int maxBucketCount = counts.Values.Max();
             for (int value = lowerBound; value <= upperBound; value++)
             {
-                int count = orderedValues.Count(item => item == value);
-                bucketCounts.Add((value, count));
-            }
-
-            int maxBucketCount = bucketCounts.Count == 0 ? 0 : bucketCounts.Max(bucket => bucket.Count);
-            foreach (var (value, count) in bucketCounts)
-            {
-                histogram.HistogramBars.Add(new HistogramBar(value, count, maxBucketCount));
+                histogram.HistogramBars.Add(new HistogramBar(value, counts.GetValueOrDefault(value), maxBucketCount));
             }
 
             return histogram;
@@ -156,43 +188,39 @@ namespace Dungeons2.ViewModels
             if (roomTicks.Count == 0)
                 return plot;
 
-            var roomTickPmf = roomTicks
-                .GroupBy(ticks => ticks)
-                .OrderBy(group => group.Key)
-                .Select(group => (Ticks: group.Key, Probability: (double)group.Count() / roomTicks.Count))
-                .ToList();
+            // All room ticks are positive, so a sum above the graph's upper bound
+            // can never contribute to its CDF. Discard that tail during convolution,
+            // retaining the original probabilities (do not renormalize the prefix).
+            const int maximumTotalTicks = FloorTimeCdfPlot.MaximumDisplayedTicks;
+            var counts = new int[maximumTotalTicks + 1];
+            foreach (int ticks in roomTicks)
+                if (ticks <= maximumTotalTicks)
+                    counts[ticks]++;
 
-            double[] roomCountProbabilities =
-            [
-                1.0 / 45, 1.0 / 45, 1.0 / 45, 1.0 / 45,
-                37.0 / 315, 37.0 / 315, 37.0 / 315, 37.0 / 315,
-                37.0 / 315, 37.0 / 315, 37.0 / 315,
-                1.0 / 45, 1.0 / 45, 1.0 / 45, 1.0 / 45
-            ];
-
-            int maximumRoomTicks = roomTickPmf[^1].Ticks;
-            double[] sumDistribution = [1.0];
-            double[] floorTimeDistribution = new double[64 * maximumRoomTicks + 1];
+            var sumDistribution = new double[maximumTotalTicks + 1];
+            var nextDistribution = new double[maximumTotalTicks + 1];
+            var floorTimeDistribution = new double[maximumTotalTicks + 1];
+            sumDistribution[0] = 1;
 
             for (int roomCount = 1; roomCount <= 64; roomCount++)
             {
-                var nextDistribution = new double[sumDistribution.Length + maximumRoomTicks];
-                for (int totalTicks = 0; totalTicks < sumDistribution.Length; totalTicks++)
+                Array.Clear(nextDistribution);
+                for (int ticks = 1; ticks <= maximumTotalTicks; ticks++)
                 {
-                    double sumProbability = sumDistribution[totalTicks];
-                    if (sumProbability == 0)
+                    if (counts[ticks] == 0)
                         continue;
 
-                    foreach (var (ticks, probability) in roomTickPmf)
-                        nextDistribution[totalTicks + ticks] += sumProbability * probability;
+                    double probability = (double)counts[ticks] / roomTicks.Count;
+                    for (int totalTicks = ticks; totalTicks <= maximumTotalTicks; totalTicks++)
+                        nextDistribution[totalTicks] += sumDistribution[totalTicks - ticks] * probability;
                 }
 
-                sumDistribution = nextDistribution;
+                (sumDistribution, nextDistribution) = (nextDistribution, sumDistribution);
                 if (roomCount < 50)
                     continue;
 
-                double roomCountProbability = roomCountProbabilities[roomCount - 50];
-                for (int totalTicks = 0; totalTicks < sumDistribution.Length; totalTicks++)
+                double roomCountProbability = roomCount is >= 54 and <= 60 ? 37.0 / 315 : 1.0 / 45;
+                for (int totalTicks = 0; totalTicks <= maximumTotalTicks; totalTicks++)
                     floorTimeDistribution[totalTicks] += roomCountProbability * sumDistribution[totalTicks];
             }
 
@@ -241,7 +269,9 @@ namespace Dungeons2.ViewModels
     public class FloorMetricHistogram(string title, int sampleCount, int? floorCount = null)
     {
         public string Title { get; } = title;
-        public string? ThemeCounts => floorCount.HasValue ? $"Rooms: {sampleCount}   Floors: {floorCount.Value}" : null;
+        public int SampleCount { get; } = sampleCount;
+        public int? FloorCount { get; } = floorCount;
+        public string? ThemeCounts => FloorCount.HasValue ? $"Rooms: {SampleCount}   Floors: {FloorCount.Value}" : null;
         public ObservableCollection<HistogramBar> HistogramBars { get; } = [];
         public double Average { get; set; }
         public double StandardDeviation { get; set; }
@@ -267,14 +297,14 @@ namespace Dungeons2.ViewModels
         private const double RightMargin = 16;
         private const double TopMargin = 16;
         private const double BottomMargin = 38;
-        private const int MinimumDisplayedTicks = 450; // 4:30 at 0.6 seconds per tick.
-        private const int MaximumDisplayedTicks = 900; // 9:00 at 0.6 seconds per tick.
+        private const int MinimumDisplayedTicks = 400; // 4:00 at 0.6 seconds per tick.
+        internal const int MaximumDisplayedTicks = 900; // 9:00 at 0.6 seconds per tick.
         private double[] _cumulativeProbabilities = [];
 
         public string Title { get; } = title;
         public string Detail => $"{RoomSampleDetail}   Average recorded floor time: {FormatAverageFloorTime(averageFloorTime)}";
         public PointCollection CdfPoints { get; } = [];
-        public string MinimumTimeLabel => "4:30";
+        public string MinimumTimeLabel => "4:00";
         public string MaximumTimeLabel => "9:00";
         public bool HasDistribution => _cumulativeProbabilities.Length > 0;
 
@@ -298,23 +328,22 @@ namespace Dungeons2.ViewModels
 
         public void SetDistribution(IReadOnlyList<double> probabilities)
         {
-            double probabilityTotal = probabilities.Sum();
-            if (probabilityTotal == 0)
-                return;
-
-            _cumulativeProbabilities = new double[probabilities.Count];
+            // Input is a prefix of an already normalized PMF. Its missing mass
+            // belongs beyond the visible range, including when the prefix is all zero.
+            CdfPoints.Clear();
+            _cumulativeProbabilities = new double[Math.Min(probabilities.Count, MaximumDisplayedTicks + 1)];
             double runningProbability = 0;
-            for (int totalTicks = 0; totalTicks < probabilities.Count; totalTicks++)
+            for (int totalTicks = 0; totalTicks < _cumulativeProbabilities.Length; totalTicks++)
             {
-                runningProbability += probabilities[totalTicks] / probabilityTotal;
-                _cumulativeProbabilities[totalTicks] = runningProbability;
+                runningProbability += probabilities[totalTicks];
+                _cumulativeProbabilities[totalTicks] = Math.Clamp(runningProbability, 0, 1);
             }
+            if (!HasDistribution)
+                return;
 
             double plotWidth = ChartWidth - LeftMargin - RightMargin;
             double plotHeight = ChartHeight - TopMargin - BottomMargin;
-            double cumulativeProbability = probabilities
-                .Take(Math.Min(MinimumDisplayedTicks + 1, probabilities.Count))
-                .Sum() / probabilityTotal;
+            double cumulativeProbability = _cumulativeProbabilities[Math.Min(MinimumDisplayedTicks, _cumulativeProbabilities.Length - 1)];
 
             CdfPoints.Add(new Point(LeftMargin, TopMargin + (1 - cumulativeProbability) * plotHeight));
 
@@ -329,7 +358,7 @@ namespace Dungeons2.ViewModels
                     (MaximumDisplayedTicks - MinimumDisplayedTicks);
                 double x = LeftMargin + normalizedX * plotWidth;
                 CdfPoints.Add(new Point(x, TopMargin + (1 - cumulativeProbability) * plotHeight));
-                cumulativeProbability += probability / probabilityTotal;
+                cumulativeProbability = _cumulativeProbabilities[totalTicks];
                 CdfPoints.Add(new Point(x, TopMargin + (1 - cumulativeProbability) * plotHeight));
             }
 
