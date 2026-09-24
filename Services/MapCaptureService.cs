@@ -14,6 +14,7 @@ namespace Dungeons2.Services
         private readonly CancellationTokenSource _cts = new();
         private DateTimeOffset _lastProcessedFloorTime = DateTimeOffset.MinValue;
         private DateTimeOffset _lastWinterfaceDetectionAttempt = DateTimeOffset.MinValue;
+        private int _keybagCaptureCyclesToSkip;
 
         public IntPtr TargetWindowHandle
         {
@@ -101,7 +102,13 @@ namespace Dungeons2.Services
             var (newMap, newRoomCount) = reader.ReadMap();
             var (mapChanged, newRoomLocations) = DungeonStore.Map.Merge(newMap);
 
-            ulong newKeymask = reader.ReadKeybag();
+            // The new floor's map can appear before the previous keybag clears.
+            // Keep tracking the map while ignoring the first two keybag samples.
+            ulong newKeymask = 0;
+            if (_keybagCaptureCyclesToSkip > 0)
+                _keybagCaptureCyclesToSkip--;
+            else if (DungeonStore.IsKeybagFound)
+                newKeymask = reader.ReadKeybag();
             ulong keymaskDelta = newKeymask & ~DungeonStore.KeyMask;
             bool changed = mapChanged || keymaskDelta != 0;
             if (newRoomCount > DungeonStore.RoomCount)
@@ -180,6 +187,7 @@ namespace Dungeons2.Services
 
         private void NewFloor()
         {
+            _keybagCaptureCyclesToSkip = 2;
             DungeonStore.IsActive = true;
             DungeonStore.IsPartial = false;
             DungeonStore.KeyMask = 0;
