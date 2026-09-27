@@ -2,13 +2,20 @@
 using System.Runtime.InteropServices.Marshalling;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
+using ApiInformation = Windows.Foundation.Metadata.ApiInformation;
 using Windows.Graphics.Capture;
 using Windows.Graphics.DirectX.Direct3D11;
-using Windows.UI;
 using WinRT;
 
 namespace Dungeons2
 {
+    [GeneratedComInterface, Guid("3628E81B-3CAC-4C60-B7F4-23CE0E0C3356"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    partial interface IGraphicsCaptureItemInterop
+    {
+        IntPtr CreateForWindow(IntPtr window, in Guid iid);
+        IntPtr CreateForMonitor(IntPtr monitor, in Guid iid);
+    }
+
     [GeneratedComInterface, Guid("A9B3D012-3DF2-4EE3-B8D1-8695F457D3C1"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     partial interface IDirect3DDxgiInterfaceAccess
     {
@@ -69,10 +76,31 @@ namespace Dungeons2
 
         public bool IsActive => currentFrame != null;
 
-        public void SetTarget(WindowId windowId)
+        public void SetTarget(IntPtr windowHandle)
         {
-            var item = GraphicsCaptureItem.TryCreateFromWindowId(windowId);
-            if (item is null) return;
+            if (windowHandle == IntPtr.Zero || !GraphicsCaptureSession.IsSupported())
+                return;
+
+            // HWND interop works on Windows 10; TryCreateFromWindowId does not.
+            GraphicsCaptureItem item;
+            try
+            {
+                var interop = GraphicsCaptureItem.As<IGraphicsCaptureItemInterop>();
+                var itemPointer = interop.CreateForWindow(windowHandle, new Guid("79C3F95B-31F7-4EC2-A464-632EF5D30760"));
+                try
+                {
+                    item = GraphicsCaptureItem.FromAbi(itemPointer);
+                }
+                finally
+                {
+                    Marshal.Release(itemPointer);
+                }
+            }
+            catch (Exception e) when (e is COMException or ArgumentException)
+            {
+                Services.LogService.Instance.LogError($"Unable to capture target window: {e.Message}");
+                return;
+            }
 
             lock (frameLock)
             {
@@ -90,9 +118,14 @@ namespace Dungeons2
 
                 session = framePool.CreateCaptureSession(item);
                 session.IsCursorCaptureEnabled = false;
-                session.IncludeSecondaryWindows = false;
-                session.IsBorderRequired = false;
-                session.MinUpdateInterval = TimeSpan.Zero;
+                // These optional properties are unavailable on Windows 10.
+                const string sessionType = "Windows.Graphics.Capture.GraphicsCaptureSession";
+                if (ApiInformation.IsPropertyPresent(sessionType, nameof(GraphicsCaptureSession.IncludeSecondaryWindows)))
+                    session.IncludeSecondaryWindows = false;
+                if (ApiInformation.IsPropertyPresent(sessionType, nameof(GraphicsCaptureSession.IsBorderRequired)))
+                    session.IsBorderRequired = false;
+                if (ApiInformation.IsPropertyPresent(sessionType, nameof(GraphicsCaptureSession.MinUpdateInterval)))
+                    session.MinUpdateInterval = TimeSpan.Zero;
 
                 framePool.FrameArrived += (sender, args) =>
                 {

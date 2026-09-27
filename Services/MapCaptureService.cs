@@ -24,7 +24,7 @@ namespace Dungeons2.Services
                 if (field != value)
                 {
                     field = value;
-                    GameCapture.SetTarget(new((ulong)value));
+                    GameCapture.SetTarget(value);
 
                     DungeonStore.KeyMask = 0;
                     DungeonStore.IsActive = false;
