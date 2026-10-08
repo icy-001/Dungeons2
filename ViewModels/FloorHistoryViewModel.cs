@@ -6,6 +6,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media.Imaging;
+using Dungeons2.Services;
 
 namespace Dungeons2.ViewModels
 {
@@ -27,12 +29,46 @@ namespace Dungeons2.ViewModels
         public partial FloorData? SelectedFloor { get; set; }
 
         [ObservableProperty]
+        public partial BitmapSource? SelectedWinterfaceImage { get; private set; }
+
+        [ObservableProperty]
         public partial string SelectedTeamSizeFilter { get; set; } = "No filter";
 
         public FloorHistoryViewModel()
         {
             FilteredFloorHistory = CollectionViewSource.GetDefaultView(FloorHistory);
             FilteredFloorHistory.Filter = FilterFloorHistory;
+            PropertyChangedEventManager.AddHandler(Settings.Instance, OnWinterfaceLocationChanged, nameof(Settings.WinterfaceSaveLocation));
+        }
+
+        partial void OnSelectedFloorChanged(FloorData? value) => LoadWinterfaceImage();
+
+        private void OnWinterfaceLocationChanged(object? sender, PropertyChangedEventArgs e) => LoadWinterfaceImage();
+
+        private static string WinterfacePath(FloorData floor) =>
+            Path.Combine(Settings.Instance.WinterfaceSaveLocation, $"{floor.Timestamp:yyyy-MM-dd HH-mm-ss}.png");
+
+        private void LoadWinterfaceImage()
+        {
+            SelectedWinterfaceImage = null;
+            if (SelectedFloor is null) return;
+            try
+            {
+                string path = WinterfacePath(SelectedFloor);
+                if (!File.Exists(path)) return;
+                using var stream = File.OpenRead(path);
+                var image = new BitmapImage();
+                image.BeginInit();
+                image.CacheOption = BitmapCacheOption.OnLoad;
+                image.StreamSource = stream;
+                image.EndInit();
+                image.Freeze();
+                SelectedWinterfaceImage = image;
+            }
+            catch (Exception e) when (FileSafety.IsFileError(e) || e is System.Runtime.InteropServices.COMException)
+            {
+                LogService.Instance.LogError($"Unable to load winterface preview: {e.Message}");
+            }
         }
 
         partial void OnSelectedTeamSizeFilterChanged(string value)
@@ -62,7 +98,7 @@ namespace Dungeons2.ViewModels
         {
             if (floor is null)
                 return;
-            string filePath = Path.Combine(Settings.Instance.WinterfaceSaveLocation, $"{floor.Timestamp:yyyy-MM-dd HH-mm-ss}.png");
+            string filePath = WinterfacePath(floor);
             if (File.Exists(filePath))
                 _ = Process.Start(new ProcessStartInfo { FileName = filePath, UseShellExecute = true });
             else

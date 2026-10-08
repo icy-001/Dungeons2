@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System.IO;
 using System.Text.Json;
+using Dungeons2.Services;
 
 namespace Dungeons2
 {
@@ -42,19 +43,50 @@ namespace Dungeons2
         private static readonly string SettingsFile = Path.Combine(AppDataPath, "settings.json");
 
         public static void Save(Settings data)
+            => SaveTo(data, SettingsFile);
+
+        internal static void SaveTo(Settings data, string path)
         {
-            _ = Directory.CreateDirectory(AppDataPath);
-            string json = JsonSerializer.Serialize(data, jsonSerializerOptions);
-            File.WriteAllText(SettingsFile, json);
+            FileSafety.Try("Saving settings", () =>
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+                string temporary = path + ".tmp";
+                File.WriteAllText(temporary, JsonSerializer.Serialize(data, jsonSerializerOptions));
+                if (File.Exists(path))
+                {
+                    // Keep the last valid settings, not a corrupted primary file.
+                    bool valid = false;
+                    try { valid = JsonSerializer.Deserialize<Settings>(File.ReadAllText(path)) != null; }
+                    catch (JsonException) { }
+                    File.Replace(temporary, path, valid ? path + ".bak" : null);
+                }
+                else
+                    File.Move(temporary, path);
+            });
         }
 
-        public static Settings Load()
-        {
-            if (!File.Exists(SettingsFile))
-                return new();
+        public static Settings Load() => LoadFrom(SettingsFile);
 
-            string json = File.ReadAllText(SettingsFile);
-            return JsonSerializer.Deserialize<Settings>(json) ?? new();
+        internal static Settings LoadFrom(string path)
+        {
+            foreach (string candidate in new[] { path, path + ".bak" })
+            {
+                if (!File.Exists(candidate)) continue;
+                try
+                {
+                    var settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(candidate));
+                    if (settings is null) throw new JsonException("Settings were null.");
+                    settings.MapSaveLocation = string.IsNullOrWhiteSpace(settings.MapSaveLocation) ? "Maps" : settings.MapSaveLocation;
+                    settings.WinterfaceSaveLocation = string.IsNullOrWhiteSpace(settings.WinterfaceSaveLocation) ? "Winterfaces" : settings.WinterfaceSaveLocation;
+                    settings.AverageRpms ??= [8.4, 13, 16, 18, 20];
+                    return settings;
+                }
+                catch (Exception e) when (e is JsonException || FileSafety.IsFileError(e))
+                {
+                    LogService.Instance.LogError($"Unable to load {candidate}: {e.Message}");
+                }
+            }
+            return new();
         }
     }
 }

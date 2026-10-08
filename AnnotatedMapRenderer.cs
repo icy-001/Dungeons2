@@ -144,7 +144,7 @@ namespace Dungeons2
                     ticks.ToString(),
                     CultureInfo.CurrentCulture,
                     FlowDirection.LeftToRight,
-                    new Typeface("Cascadia Code"),
+                    new Typeface("Cascadia Mono, Consolas"),
                     10,
                     brush,
                     1.0);

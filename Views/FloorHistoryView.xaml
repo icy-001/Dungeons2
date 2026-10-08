@@ -83,7 +83,12 @@
                 </Border>
 
             <Border Grid.Column="1" Style="{StaticResource CardStyle}" Grid.ColumnSpan="2" DataContext="{Binding SelectedFloor}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -292,7 +297,23 @@
                             </Border>
                         </StackPanel>
                     </Border>
+                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,20,0,0"
+                                DataContext="{Binding DataContext.SelectedWinterfaceImage, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <TextBlock Text="Winterface" Foreground="White" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <Image Source="{Binding}" Stretch="Uniform" StretchDirection="DownOnly"
+                               MaxWidth="512" HorizontalAlignment="Left"/>
+                    </StackPanel>
                 </Grid>
+                </ScrollViewer>
             </Border>
         </Grid>
     </Grid>

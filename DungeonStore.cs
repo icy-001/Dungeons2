@@ -55,13 +55,8 @@ namespace Dungeons2
                     FloorHistory.Add(floorData);
             };
 
-            if (System.IO.File.Exists("floors.jsonl"))
-                foreach (string line in System.IO.File.ReadLines("floors.jsonl"))
-                {
-                    var floorData = System.Text.Json.JsonSerializer.Deserialize<FloorData>(line);
-                    if (floorData is not null)
-                        FloorHistory.Add(floorData);
-                }
+            foreach (var floorData in FloorHistoryLoader.Load("floors.jsonl"))
+                FloorHistory.Add(floorData);
 
             BindingOperations.EnableCollectionSynchronization(RoomTicks, _roomTicksLock);
             BindingOperations.EnableCollectionSynchronization(FloorHistory, _floorHistoryLock);

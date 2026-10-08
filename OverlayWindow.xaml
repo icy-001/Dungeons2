@@ -12,7 +12,7 @@
                 VerticalAlignment="Stretch" 
                 IsHitTestVisible="False" Height="280" Width="280" />
         <Border x:Name="StatusBorder" Padding="20,4" HorizontalAlignment="Stretch" Background="#C0000000">
-            <TextBlock x:Name="StatusText" Foreground="Gray" FontFamily="Cascadia Mono" FontSize="13" FontWeight="SemiBold">
+            <TextBlock x:Name="StatusText" Foreground="Gray" FontFamily="Cascadia Mono, Consolas" FontSize="13" FontWeight="SemiBold">
                 <Run x:Name="RoomsRun" Foreground="White"></Run> <Run>rooms</Run> • 
                 <Run x:Name="DERun" Foreground="White"></Run> <Run x:Name="DELabel">dead ends</Run>
                 <LineBreak />

@@ -22,7 +22,9 @@ namespace Dungeons2.Services
         public void LogError(string message)
         {
             Logs.Add((DateTimeOffset.Now, message));
-            File.AppendAllText("errors.log", $"[{DateTimeOffset.Now:G}] {message}\n");
+            // Logging a failed save must not fail for the same permission problem.
+            try { File.AppendAllText("errors.log", $"[{DateTimeOffset.Now:G}] {message}\n"); }
+            catch (Exception e) when (FileSafety.IsFileError(e)) { System.Diagnostics.Debug.WriteLine(e); }
             OnLogReceived?.Invoke((DateTimeOffset.Now, message));
         }
     }

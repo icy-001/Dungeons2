@@ -10,6 +10,8 @@ namespace Dungeons2
         [JsonConstructor]
         public Map(int rows, int cols)
         {
+            if (rows is < 1 or > 8 || cols is < 1 or > 8)
+                throw new ArgumentOutOfRangeException(nameof(rows), "Map dimensions must be between 1 and 8.");
             Rows = rows;
             Cols = cols;
             Rooms = new Room[rows * cols];
@@ -36,6 +38,37 @@ namespace Dungeons2
 
         static readonly Directions[] SingleDirections = [Directions.W, Directions.E, Directions.S, Directions.N];
         static Registry Registry => Registry.Instance;
+
+        public bool Contains(Coord position) => position.Row >= 0 && position.Row < Rows && position.Col >= 0 && position.Col < Cols;
+
+        // Validate persisted/recognized data before it reaches renderers and stats.
+        public bool HasValidData()
+        {
+            if (Rooms is null || Rooms.Length != Rows * Cols || PlayerLocations is null || PlayerLocations.Length != 5 ||
+                (Base != Coord.Nothing && !Contains(Base)) || (Boss != Coord.Nothing && !Contains(Boss)) ||
+                PlayerLocations.Any(p => p.HasValue && !Contains(p.Value))) return false;
+            for (int r = 0; r < Rows; r++)
+                for (int c = 0; c < Cols; c++)
+                {
+                    var room = this[r, c];
+                    if ((int)room.Doors > 15 || room.Key is < -1 or > 63 || room.Lock is < -1 or > 63 ||
+                        room.SkillDoor < -1 || room.SkillDoor >= Registry.SkillDoors.Length ||
+                        (room.Parent != Directions.None && !SingleDirections.Contains(room.Parent))) return false;
+                    foreach (var direction in SingleDirections)
+                        if ((room.Doors.HasFlag(direction) || room.Parent == direction) && !Contains(Add(new(r, c), direction))) return false;
+                    var ancestors = new HashSet<Coord>();
+                    var current = new Coord(r, c);
+                    while (Contains(current))
+                    {
+                        if (!ancestors.Add(current)) return false;
+                        var parent = this[current.Row, current.Col].Parent;
+                        if (parent == Directions.None) break;
+                        if (!SingleDirections.Contains(parent)) return false;
+                        current = Add(current, parent);
+                    }
+                }
+            return true;
+        }
 
         public int Index(int row, int col)
         {
@@ -94,6 +127,7 @@ namespace Dungeons2
 
             void Visit(Coord c, Directions dir)
             {
+                if (!Contains(c)) return;
                 var (i, j) = c;
                 if (visited[i, j])
                     return;
@@ -113,7 +147,7 @@ namespace Dungeons2
                 if (this[i, j].Doors.HasFlag(d) && this[i, j].Parent != d)
                 {
                     var (ii, jj) = Add(new(i, j), d);
-                    yield return this[ii, jj];
+                    if (Contains(new(ii, jj))) yield return this[ii, jj];
                 }
         }
 
@@ -261,7 +295,7 @@ namespace Dungeons2
                 for (int j = 0; j < Cols; j++)
                 {
                     var room = this[i, j];
-                    if (room.Lock == -1)
+                    if (room.Lock is < 0 or >= 64)
                         continue;
 
                     var keyLocation = keyLocations[room.Lock];
@@ -286,14 +320,15 @@ namespace Dungeons2
                         // Trace the unique ancestor path from Base to T
                         var path = new List<Coord>();
                         var current = T;
-                        while (current != Coord.Nothing)
+                        var ancestors = new HashSet<Coord>();
+                        while (Contains(current) && ancestors.Add(current))
                         {
                             path.Add(current);
                             if (current == Base)
                                 break;
 
                             var currentRoom = this[current.Row, current.Col];
-                            if (currentRoom.Parent == Directions.None)
+                            if (!SingleDirections.Contains(currentRoom.Parent))
                                 break;
 
                             current = Add(current, currentRoom.Parent);
@@ -334,7 +369,7 @@ namespace Dungeons2
         public bool[,] ComputeCriticalGrid()
         {
             var res = new bool[8, 8];
-            if (Boss == Coord.Nothing || Base == Coord.Nothing || PlayerCount != 1 || KeyMask() == 0)
+            if (!Contains(Boss) || !Contains(Base) || PlayerCount != 1 || KeyMask() == 0)
                 return res;
             res[Base.Row, Base.Col] = true;
             var keyLocs = new Coord[64];
@@ -343,16 +378,16 @@ namespace Dungeons2
                 for (int j = 0; j < 8; j++)
                 {
                     var room = this[i, j];
-                    if (room.Key != -1)
+                    if (room.Key is >= 0 and < 64)
                         keyLocs[room.Key] = new(i, j);
                 }
             Stack<int> criticalKeys = [];
             void MakeCritical(Coord pos)
             {
-                for (; pos != Coord.Nothing && !res[pos.Row, pos.Col] && this[pos.Row, pos.Col].Parent != Directions.None; pos = Add(pos, this[pos.Row, pos.Col].Parent))
+                for (; Contains(pos) && !res[pos.Row, pos.Col] && SingleDirections.Contains(this[pos.Row, pos.Col].Parent); pos = Add(pos, this[pos.Row, pos.Col].Parent))
                 {
                     res[pos.Row, pos.Col] = true;
-                    if (this[pos.Row, pos.Col].Lock != -1)
+                    if (this[pos.Row, pos.Col].Lock is >= 0 and < 64)
                         criticalKeys.Push(this[pos.Row, pos.Col].Lock);
                 }
             }
@@ -383,7 +418,7 @@ namespace Dungeons2
         /// <returns>The depth of the map, which is the longest 1-way path length of the floor.</returns>
         public int ComputeDepth()
         {
-            if (Boss == Coord.Nothing || Base == Coord.Nothing || PlayerCount != 1 || KeyMask() != LockMask())
+            if (!Contains(Boss) || !Contains(Base) || PlayerCount != 1 || KeyMask() != LockMask())
                 return 0;
 
             int res = 0;
@@ -394,6 +429,7 @@ namespace Dungeons2
 
             frontier[0] = Base;
             int frontierCount = 1;
+            var discovered = new HashSet<Coord> { Base };
 
             while (frontierCount > 0 && res < 64)
             {
@@ -416,7 +452,12 @@ namespace Dungeons2
                         nextKeymask |= 1UL << room.Key;
                     foreach (var d in SingleDirections)
                         if (room.Doors.HasFlag(d) && room.Parent != d)
-                            nextFrontier[nextCount++] = Add(frontier[i], d);
+                        {
+                            var child = Add(frontier[i], d);
+                            // Invalid topology is not a meaningful depth measurement.
+                            if (!Contains(child) || !discovered.Add(child)) return 0;
+                            nextFrontier[nextCount++] = child;
+                        }
                 }
 
                 if (!progressed)

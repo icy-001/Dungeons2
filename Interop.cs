@@ -39,6 +39,14 @@ namespace Dungeons2
             [LibraryImport("user32.dll")]
             public static partial IntPtr GetForegroundWindow();
 
+            [LibraryImport("user32.dll")]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static partial bool IsIconic(IntPtr hwnd);
+
+            [LibraryImport("user32.dll")]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static partial bool IsWindow(IntPtr hwnd);
+
             [LibraryImport("user32.dll", SetLastError = true)]
             [return: MarshalAs(UnmanagedType.Bool)]
             public static partial bool GetClientRect(IntPtr hwnd, out RECT lpRect);

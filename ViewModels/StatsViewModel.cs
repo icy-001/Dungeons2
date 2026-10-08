@@ -88,7 +88,7 @@ namespace Dungeons2.ViewModels
 
                 var floors = floorsByTheme[theme];
                 var ticks = floors.SelectMany(floor => floor.RoomTicks)
-                    .Select(split => split.Ticks).Where(value => value > 0).ToList();
+                    .Select(split => split.Ticks).Where(value => value > 1).ToList();
                 SetItem(Histograms, theme, CreateHistogram($"{ThemeNames[theme]} room ticks", ticks, floors.Count));
                 SetItem(FloorTimeCdfPlots, theme, CreateFloorTimeCdf($"{ThemeNames[theme]} floor time CDF", ticks, AverageFloorTime(floors)));
             }

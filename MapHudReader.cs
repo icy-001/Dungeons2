@@ -147,6 +147,7 @@ namespace Dungeons2
                         }
                 }
 
+            if (!res.HasValidData()) return (new Map(8, 8), 0);
             res.AssignParents();
             return (res, roomcount);
         }

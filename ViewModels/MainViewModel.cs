@@ -42,8 +42,8 @@ namespace Dungeons2.ViewModels
             if (value != null)
             {
                 LogService.Instance.Log("Selected process changed to " + value.ToString());
-                MapCaptureService.Instance.TargetWindowHandle = value.Handle;
             }
+            MapCaptureService.Instance.TargetWindowHandle = value?.Handle ?? IntPtr.Zero;
         }
 
         [RelayCommand]

@@ -13,8 +13,8 @@ namespace Dungeons2
         {
             base.OnStartup(e);
 
-            _ = Directory.CreateDirectory(Settings.Instance.MapSaveLocation);
-            _ = Directory.CreateDirectory(Settings.Instance.WinterfaceSaveLocation);
+            FileSafety.Try("Creating map directory", () => Directory.CreateDirectory(Settings.Instance.MapSaveLocation));
+            FileSafety.Try("Creating winterface directory", () => Directory.CreateDirectory(Settings.Instance.WinterfaceSaveLocation));
 
             Registry.Instance.Initialize();
             GoogleSheetsService.Instance.Initialize();

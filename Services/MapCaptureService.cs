@@ -43,7 +43,17 @@ namespace Dungeons2.Services
             try
             {
                 while (await timer.WaitForNextTickAsync(_cts.Token))
-                    DoCapture();
+                {
+                    try
+                    {
+                        GameCapture.RecoverIfNeeded();
+                        DoCapture();
+                    }
+                    catch (Exception e) when (Dungeons2.GameCapture.IsCaptureError(e))
+                    {
+                        GameCapture.RequestRecovery(e);
+                    }
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -235,20 +245,16 @@ namespace Dungeons2.Services
 
             LogService.Instance.Log($"Floor {DungeonStore.FloorCounter} time={floorData.Time}");
 
-            try
-            {
-                // Write floor log, and save map/winterface images.
-                File.AppendAllText("floors.txt", floorData.ToTabSeparatedString());
-                File.AppendAllText("floors.jsonl", floorData.ToJsonString() + Environment.NewLine);
-                ImageWriter.SaveToPng(DungeonStore.MapImage, $"{Settings.Instance.MapSaveLocation}\\{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png");
-                RawImage raw = new(reader.Image.Pixels.ToArray(), reader.Image.Width, reader.Image.Height);
-                ImageWriter.SaveCroppedToPng(raw, $"{Settings.Instance.WinterfaceSaveLocation}\\{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png", 0, 0, WinterfaceReader.WinterfaceWidth, WinterfaceReader.WinterfaceHeight);
-            }
-            catch (IOException e)
-            {
-                LogService.Instance.Log("Error writing floor log to file or saving map/winterface images: " + e.Message);
-            }
-            // Notify the ViewModel
+            // Each destination is independent: one failed save must not prevent
+            // the remaining saves or adding the completed floor to the UI.
+            FileSafety.Try("Saving floor text log", () => File.AppendAllText("floors.txt", floorData.ToTabSeparatedString()));
+            FileSafety.Try("Saving floor JSON log", () => FloorHistoryLoader.Append("floors.jsonl", floorData));
+            FileSafety.Try("Saving map image", () => ImageWriter.SaveToPng(DungeonStore.MapImage,
+                Path.Combine(Settings.Instance.MapSaveLocation, $"{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png")));
+            RawImage raw = new(reader.Image.Pixels.ToArray(), reader.Image.Width, reader.Image.Height);
+            FileSafety.Try("Saving winterface image", () => ImageWriter.SaveCroppedToPng(raw,
+                Path.Combine(Settings.Instance.WinterfaceSaveLocation, $"{floorData.Timestamp:yyyy-MM-dd HH-mm-ss}.png"),
+                0, 0, WinterfaceReader.WinterfaceWidth, WinterfaceReader.WinterfaceHeight));
             OnFloorCompleted?.Invoke(floorData);
         }
     }

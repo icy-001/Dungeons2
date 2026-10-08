@@ -10,7 +10,7 @@
                  Background="#1E1E1E"
                  Foreground="#E0E0E0"
                  BorderThickness="0"
-                 FontFamily="Cascadia Code"
+                 FontFamily="Cascadia Mono, Consolas"
                  Margin="10" Padding="2" IsReadOnlyCaretVisible="True"/>
     </Grid>
 </UserControl>

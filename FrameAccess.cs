@@ -13,11 +13,24 @@ namespace Dungeons2
         {
             if (tex is null)
                 return;
-            lock (frameLock)
-                if (ctx.NativePointer != IntPtr.Zero && tex.NativePointer != IntPtr.Zero)
-                    ctx.Unmap(tex, 0);
-            if (ownTexture && tex.NativePointer != IntPtr.Zero)
-                tex.Dispose();
+            try
+            {
+                lock (frameLock)
+                    if (ctx.NativePointer != IntPtr.Zero && tex.NativePointer != IntPtr.Zero)
+                        ctx.Unmap(tex, 0);
+            }
+            catch (Exception e) when (GameCapture.IsCaptureError(e))
+            {
+                GameCapture.Instance.RequestRecovery(e);
+            }
+            finally
+            {
+                if (ownTexture && tex.NativePointer != IntPtr.Zero)
+                {
+                    try { tex.Dispose(); }
+                    catch (Exception e) when (GameCapture.IsCaptureError(e)) { GameCapture.Instance.RequestRecovery(e); }
+                }
+            }
         }
     }
 }
