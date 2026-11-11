@@ -228,7 +228,12 @@ public partial class GoogleSheetsService : ObservableObject
                     if (record.TargetCell is null)
                     {
                         using var existing = await GetValuesAsync(id, QuoteSheet(sheetTitle) + "!" + start.DataRange, ct, formulas: true);
-                        int nextRow = checked(start.Row + Rows(existing).Count());
+                        // Fill gaps before summary rows, but never replace a formula,
+                        // including formulas whose displayed result is an empty string.
+                        int occupiedRows = Rows(existing).TakeWhile(row =>
+                            row.GetArrayLength() > 0 && row[0].ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined)
+                            && row[0].ToString().Length > 0).Count();
+                        int nextRow = checked(start.Row + occupiedRows);
                         record = record with { TargetCell = new GoogleSheetsStartCell(start.Column, nextRow).Address, TargetSheetId = sheetId, FormatVersion = 2 };
                         lock (queueGate)
                         {

@@ -27,7 +27,7 @@ namespace Dungeons2.ViewModels
         public string StartCellHint => !IsStartCellValid ? "Enter one cell, such as A2 or C5 (not a range)."
             : $"First data cell: {GoogleSheetsStartCell.Parse(StartCellInput).Address}. Floor times only, in column " +
               $"{GoogleSheetsStartCell.ColumnName(GoogleSheetsStartCell.Parse(StartCellInput).Column)}. " +
-              "Existing data is kept; times append below it. Apply changes for new floors only.";
+              "Fills the first empty cell downward, skipping values and formulas. Apply changes for new floors only.";
         public string DestinationSummary => $"Destination: first visible worksheet · starting at {Settings.Instance.SpreadsheetStartCell}";
 
         partial void OnStartCellInputChanged(string value)

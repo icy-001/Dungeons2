@@ -2,7 +2,7 @@
 
 A real-time overlay for Dungeoneering in RuneScape 3. It automatically captures the game window, reads the in-game minimap and HUD, and provides players with a live annotated map, floor analytics, and performance tracking.
 
-> ⚠️ Early development (v0.2.5)
+> ⚠️ Early development (v0.2.6)
 
 ---
 
@@ -58,7 +58,7 @@ dotnet run
 1. In your Google Cloud project, enable **Google Sheets API** and **Google Picker API**. Configure the Google Auth consent screen, audience, and test users (while the app is in Testing).
 2. Create an OAuth client of type **Desktop app**, download its JSON configuration, and name it `credentials.json`. Place it in the project root for development (build/publish copies it) or next to `Dungeons2.exe` for an installed app. It must have an `installed` object, not `web` or `service_account`. The file is Git-ignored; do not commit real credentials or tokens.
 3. Open **Settings → Google Sheets → Connect Google Sheets…**. Sign in in your system browser, choose one editable Google spreadsheet in Picker, and grant access. Use **Change spreadsheet…** to select a different destination later. No backend, API key, service account, or manually entered spreadsheet ID is needed.
-4. Logging is enabled after connection. **Only floors with `Bonus == 1` are logged**, matching the original eligibility rule. Their completion times are written to one column of the **first visible worksheet**, not a dedicated tab. Set **Starting cell** (for example `A2` or `C5`) and click **Apply**. Times start there if empty, or append below existing data in that column. Floor times use `USER_ENTERED` so Sheets interprets them as durations just as before (including its locale and cell-format rules), rather than storing literal text. No headers, floor IDs, timestamps, or duplicate-tracking columns are written. Adjacent columns and other tabs are untouched; existing data from earlier versions is not deleted or converted.
+4. Logging is enabled after connection. **Only floors with `Bonus == 1` are logged**, matching the original eligibility rule. Their completion times are written to one column of the **first visible worksheet**, not a dedicated tab. Set **Starting cell** (for example `A2` or `C5`) and click **Apply**. Each time goes into the first empty cell at or below that starting cell. Existing values and formulas are skipped, so blank floor rows above a summary are filled first; logging can continue below the summary when those rows are full. Floor times use `USER_ENTERED` so Sheets interprets them as durations just as before (including its locale and cell-format rules), rather than storing literal text. No headers, floor IDs, timestamps, or duplicate-tracking columns are written. Adjacent columns and other tabs are untouched; existing data from earlier versions is not deleted or converted.
 
 5. Optionally expand **Optional write test** and click **Write test message to B2** to write `Hello from Dungeons2!` to the first visible worksheet, which must be an editable grid. The test refuses to overwrite existing values or formulas. Run it on a test spreadsheet without simultaneous editors. The service also exposes `WriteValuesAsync(range, values, cancellationToken)` for explicit arbitrary-range writes using literal (`RAW`) values.
 

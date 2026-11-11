@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <VersionPrefix>0.2.5</VersionPrefix>
+    <VersionPrefix>0.2.6</VersionPrefix>
     <ApplicationIcon>Images\ring-of-kinship.ico</ApplicationIcon>
     <EnableMsixTooling>true</EnableMsixTooling>
   </PropertyGroup>
