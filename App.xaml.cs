@@ -23,6 +23,7 @@ namespace Dungeons2
 
         protected override void OnExit(ExitEventArgs e)
         {
+            GoogleSheetsService.Instance.Stop();
             Settings.Instance.Save();
             GameCapture.Instance.Dispose();
             base.OnExit(e);

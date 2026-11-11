@@ -92,38 +92,106 @@
                     </StackPanel>
                 </Border>
 
-                <Border Background="#1E1E1E" CornerRadius="8" Padding="25" Margin="0,0,0,20" Visibility="{Binding LogSheetsEnabled, Converter={StaticResource BoolToVisConverter}}">
+                <Border Background="#1E1E1E" CornerRadius="8" Padding="25" Margin="0,0,0,20" Width="680">
                     <StackPanel>
-                        <TextBlock Text="Spreadsheet Logging" FontSize="18" FontWeight="Bold" Foreground="White" Margin="0,0,0,15"/>
+                        <StackPanel.Resources>
+                            <Style x:Key="SheetsButton" TargetType="Button">
+                                <Setter Property="Background" Value="#333"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Padding" Value="15,8"/>
+                                <Setter Property="Margin" Value="0,0,8,0"/>
+                            </Style>
+                        </StackPanel.Resources>
+                        <DockPanel Margin="0,0,0,12">
+                            <Border DockPanel.Dock="Right" Background="#29292D" CornerRadius="4" Padding="10,4" HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding SheetsState}" Foreground="{Binding SheetsStateColor}" FontSize="12"/>
+                            </Border>
+                            <TextBlock Text="Google Sheets" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <TextBlock Text="{Binding SheetsDescription}" Foreground="#AAA" TextWrapping="Wrap" Margin="0,0,0,16"/>
 
-                        <CheckBox Content="Log completed floors to Google Sheets"
-                                  IsChecked="{Binding Source={x:Static local:Settings.Instance}, Path=LogToSheet, Mode=TwoWay}"
-                                  Foreground="#E0E0E0"
-                                  FontSize="14"
-                                  Margin="0,0,0,12"/>
+                        <Border Background="#252528" CornerRadius="4" Padding="12" Margin="0,0,0,16"
+                                Visibility="{Binding Sheets.IsConnected, Converter={StaticResource BoolToVisConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="SELECTED SPREADSHEET" Foreground="#888" FontSize="10" Margin="0,0,0,5"/>
+                                <TextBlock Text="{Binding Sheets.SpreadsheetName}" Foreground="White" FontSize="15" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding DestinationSummary}" Foreground="#AAA" FontSize="12" Margin="0,5,0,0"/>
+                            </StackPanel>
+                        </Border>
 
-                        <TextBlock Text="Spreadsheet ID" Foreground="#888" Margin="0,0,0,5"/>
-                        <TextBox Text="{Binding Source={x:Static local:Settings.Instance}, Path=SpreadsheetId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 Background="#2D2D30"
-                                 Foreground="White"
-                                 BorderThickness="0"
-                                 Padding="8"
-                                 Margin="0,0,0,12"/>
+                        <StackPanel Visibility="{Binding ShowConnectedOptions, Converter={StaticResource BoolToVisConverter}}" Margin="0,0,0,16">
+                            <TextBlock Text="Starting cell" Foreground="#DDD" Margin="0,0,0,6"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBox Text="{Binding StartCellInput, UpdateSourceTrigger=PropertyChanged}" Width="100"
+                                         IsEnabled="{Binding CanUseSheet}" Background="#2D2D30" Foreground="White"
+                                         BorderThickness="0" Padding="8" Margin="0,0,8,0" VerticalContentAlignment="Center"/>
+                                <Button Content="Apply" Command="{Binding ApplySheetsStartCellCommand}" Style="{StaticResource SheetsButton}"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding StartCellHint}" TextWrapping="Wrap" Margin="0,0,0,12" FontSize="12">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#AAA"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsStartCellValid}" Value="False">
+                                                <Setter Property="Foreground" Value="#E8B568"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <CheckBox Content="Automatically log completed floors"
+                                      IsChecked="{Binding Source={x:Static local:Settings.Instance}, Path=LogToSheet, Mode=TwoWay}"
+                                      IsEnabled="{Binding CanUseSheet}" Foreground="#E0E0E0" FontSize="14"/>
+                        </StackPanel>
+                        <WrapPanel Visibility="{Binding ShowConnect, Converter={StaticResource BoolToVisConverter}}">
+                            <Button Content="{Binding ConnectLabel}" Command="{Binding ConnectGoogleSheetsCommand}" Style="{StaticResource SheetsButton}"/>
+                            <Button Content="Disconnect" Command="{Binding DisconnectGoogleSheetsCommand}" Style="{StaticResource SheetsButton}"
+                                    Visibility="{Binding Sheets.IsConnected, Converter={StaticResource BoolToVisConverter}}"/>
+                        </WrapPanel>
 
-                        <TextBlock Text="Target Column" Foreground="#888" Margin="0,0,0,5"/>
-                        <TextBox Text="{Binding Source={x:Static local:Settings.Instance}, Path=SpreadsheetColumn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 Background="#2D2D30"
-                                 Foreground="White"
-                                 BorderThickness="0"
-                                 Padding="8"
-                                 Margin="0,0,0,12"/>
+                        <StackPanel Visibility="{Binding Sheets.IsBusy, Converter={StaticResource BoolToVisConverter}}">
+                            <ProgressBar IsIndeterminate="True" Height="3" Background="#333" Foreground="#4DA6FF" BorderThickness="0" Margin="0,0,0,12"/>
+                            <Button Content="Cancel" Command="{Binding ConnectGoogleSheetsCancelCommand}" HorizontalAlignment="Left"
+                                    Visibility="{Binding ConnectGoogleSheetsCommand.IsRunning, Converter={StaticResource BoolToVisConverter}}"
+                                    Style="{StaticResource SheetsButton}"/>
+                        </StackPanel>
 
-                        <TextBlock Text="Start Row" Foreground="#888" Margin="0,0,0,5"/>
-                        <TextBox Text="{Binding Source={x:Static local:Settings.Instance}, Path=SpreadsheetStartRow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 Background="#2D2D30"
-                                 Foreground="White"
-                                 BorderThickness="0"
-                                 Padding="8"/>
+                        <Border Background="#252528" CornerRadius="4" Padding="12" Margin="0,16,0,0"
+                                Visibility="{Binding ShowQueue, Converter={StaticResource BoolToVisConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="Saved uploads" Foreground="#DDD" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <TextBlock Text="{Binding QueueSummary}" Foreground="#AAA" TextWrapping="Wrap"/>
+                                <Button Content="Retry now" Command="{Binding RetrySheetsCommand}" HorizontalAlignment="Left" Margin="0,10,0,0"
+                                        Style="{StaticResource SheetsButton}" Visibility="{Binding ShowRetry, Converter={StaticResource BoolToVisConverter}}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#252528" CornerRadius="4" Padding="12" Margin="0,16,0,0"
+                                Visibility="{Binding ShowStatusDetail, Converter={StaticResource BoolToVisConverter}}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Sheets.HasError}" Value="True">
+                                            <Setter Property="BorderBrush" Value="#705736"/>
+                                            <Setter Property="BorderThickness" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="{Binding Sheets.Status}" Foreground="{Binding SheetsStateColor}" TextWrapping="Wrap" FontSize="12"/>
+                        </Border>
+
+                        <Expander Header="Optional write test" Foreground="#AAA" Margin="0,16,0,0"
+                                  Visibility="{Binding ShowConnectedOptions, Converter={StaticResource BoolToVisConverter}}">
+                            <StackPanel Margin="0,10,0,0">
+                                <TextBlock Text="Writes “Hello from Dungeons2!” to B2 of the first visible worksheet. Existing values and formulas are never overwritten. This is not required for logging."
+                                           Foreground="#888" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                                <Button Content="Write test message to B2" Command="{Binding WriteSheetsDemoCommand}"
+                                        HorizontalAlignment="Left" Style="{StaticResource SheetsButton}"/>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
                 </Border>
 

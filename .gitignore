@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 
 /google-credentials.json
+/credentials.json
+client_secret_*.json

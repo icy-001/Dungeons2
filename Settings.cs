@@ -20,8 +20,8 @@ namespace Dungeons2
         [ObservableProperty] public partial double[] AverageRpms { get; set; } = [8.4, 13, 16, 18, 20];
         [ObservableProperty] public partial bool LogToSheet { get; set; }
         [ObservableProperty] public partial string SpreadsheetId { get; set; } = string.Empty;
-        [ObservableProperty] public partial string SpreadsheetColumn { get; set; } = "B";
-        [ObservableProperty] public partial int SpreadsheetStartRow { get; set; } = 1;
+        [ObservableProperty] public partial string SpreadsheetName { get; set; } = string.Empty;
+        [ObservableProperty] public partial string SpreadsheetStartCell { get; set; } = "A2";
         [ObservableProperty] public partial bool ShowKeydoors { get; set; } = true;
         [ObservableProperty] public partial bool ShowKeyLocations { get; set; } = true;
         [ObservableProperty] public partial bool HideTrivialKeyblocks { get; set; } = false;
@@ -79,6 +79,7 @@ namespace Dungeons2
                     settings.MapSaveLocation = string.IsNullOrWhiteSpace(settings.MapSaveLocation) ? "Maps" : settings.MapSaveLocation;
                     settings.WinterfaceSaveLocation = string.IsNullOrWhiteSpace(settings.WinterfaceSaveLocation) ? "Winterfaces" : settings.WinterfaceSaveLocation;
                     settings.AverageRpms ??= [8.4, 13, 16, 18, 20];
+                    settings.SpreadsheetStartCell = GoogleSheetsStartCell.TryParse(settings.SpreadsheetStartCell, out var start) ? start.Address : "A2";
                     return settings;
                 }
                 catch (Exception e) when (e is JsonException || FileSafety.IsFileError(e))
